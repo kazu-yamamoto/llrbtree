@@ -20,20 +20,23 @@ insert a b = Fork B d e f
     Fork _ d e f = ins a b
     ins x Leaf = Fork R Leaf x Leaf
     ins x t@(Fork c l y r)
-        | x < y = balance c (ins x l) y r
-        | x > y = balance c l y (ins x r)
+        | x < y = balanceL c (ins x l) y r
+        | x > y = balanceR c l y (ins x r)
         | otherwise = t
 
-balance :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balance B (Fork R (Fork R a x b) y c) z d =
-    Fork R (Fork B a x b) y (Fork B c z d)
-balance B (Fork R a x b) y (Fork R c z d) =
+balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
+balanceR B (Fork R a x b) y (Fork R c z d) =
     Fork R (Fork B a x b) y (Fork B c z d)
 -- x is Black since Red eliminated by the case above
 -- x is either Fork or Leaf
-balance k x y (Fork R c z d) =
+balanceR k x y (Fork R c z d) =
     Fork k (Fork R x y c) z d
-balance c a x b = Fork c a x b
+balanceR c a x b = Fork c a x b
+
+balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
+balanceL B (Fork R (Fork R a x b) y c) z d =
+    Fork R (Fork B a x b) y (Fork B c z d)
+balanceL c a x b = Fork c a x b
 
 ----------------------------------------------------------------
 

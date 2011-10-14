@@ -1,0 +1,101 @@
+This is a purely functional left-leaning red-black tree.
+
+----------------------------------------------------------------
+* Histroy of imperative red-black trees
+
+- Red-black trees (Guibas-Sedgewick, 1978)
+
+	Leo J. Guibas and Robert Sedgewik.
+	A dichromatic framework for balanced trees.
+	In Proceedings of the 19th Annual Symposium on Computer Science
+	pp8-21
+	IEEE Computer Society
+	1978
+
+- Right-leaning
+
+	Arne Andersson
+	Balanced search trees made simple
+	In Proceedings of the 3rd Workshop on Algorithms and Data Structures
+ 	pp290-306.
+	1993
+
+	R. Sedgewick
+	Algorithms in Java
+	Parts 1-4: Fundamentals, Data Structures, Sorting, and Searching
+	Addison-Wesley.
+
+- Left-leaning Red-Black Trees
+
+	Data structures seminar at Dagstuhl (Feb 2008)
+	http://www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf
+
+	Analysis of Algorithms meeting at Maresias (Apr 2008)
+	http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf
+
+----------------------------------------------------------------
+* Lines of imperative code:
+
+- Introduction to Algorithms   (original)       150   1972 (?)
+- Algorithms in Java           (tricky variant)  46   1978 (?)
+-                              (left-leaning)    33   2008
+
+----------------------------------------------------------------
+* Histroy of purefly functional red-black trees
+
+- Original
+
+	Red-Black Trees in a Functional Setting 
+	Chris Okasaki
+	Journal of Functional Programming, 9(4)
+	pp471-477
+	July 1999
+
+	http://www.eecs.usma.edu/webs/people/okasaki/pubs.html#jfp99
+
+- Dividing balance to balanceL and balanceR
+
+	Chris Okasaki
+	Purely Functional Data Structures
+	Cambridge University Press
+	1998
+
+- First deletion
+
+	Kahrs, Stefan. (2001)
+	Red-black trees with types
+	Journal of functional programming, 11(04), 425–432.
+
+- Proof in Coq
+
+	Filliaˆtre, J.-C., & Letouzey, P.
+	Functors for Proofs and Programs.
+	Pages 370-384 of: Esop'04: European symposium on programming,
+	vol. LNCS 2986. Springer.
+	2004
+
+- Efﬁcient Veriﬁed Red-Black Trees
+
+	2011
+
+	My student Max Rosmarin (Rosmarin, 2011) studied the question
+	of whether using the left-leaning invariant would mix well
+	with the Okasaki-style functional program, so as to factor the
+	implementations and proofs. Rosmarin demonstrated that Okasaki's
+	balance function can be factored into Sedgewick's three
+	operations. Although it is not conceptually more complex, the
+	factored function has more lines of code. Recall that Okasaki's
+	function, as I presented it here, has only 10 lines, which
+	is hard to improve on.
+
+- Rosmarin, Max. 2011 (Aug.). Red-black trees in a functional context:
+  Left-leaning and otherwise.
+
+Princeton University Department of Computer Science.
+
+- The missing method: Deleting from Okasaki's red-black trees
+
+	http://matt.might.net/articles/red-black-delete/
+	????
+
+

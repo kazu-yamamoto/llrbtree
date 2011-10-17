@@ -4,6 +4,7 @@ module Data.RBTree (
   , empty
   , insert
   , fromList
+  , toList
   , member
   , valid
   ) where

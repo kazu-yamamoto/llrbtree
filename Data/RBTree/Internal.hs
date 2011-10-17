@@ -49,3 +49,9 @@ member x (Fork _ l y r) = case compare x y of
     EQ -> True
 
 ----------------------------------------------------------------
+
+toList :: RBTree a -> [a]
+toList t = inorder t []
+  where
+    inorder Leaf xs = xs
+    inorder (Fork _ l x r) xs = inorder l (x : inorder r xs)

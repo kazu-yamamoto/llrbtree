@@ -31,12 +31,12 @@ balanceR B (Fork R a x b) y (Fork R c z d) =
 -- x is either Fork or Leaf
 balanceR k x y (Fork R c z d) =
     Fork k (Fork R x y c) z d
-balanceR c a x b = Fork c a x b
+balanceR k a x b = Fork k a x b
 
 balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
 balanceL B (Fork R (Fork R a x b) y c) z d =
     Fork R (Fork B a x b) y (Fork B c z d)
-balanceL c a x b = Fork c a x b
+balanceL k a x b = Fork k a x b
 
 ----------------------------------------------------------------
 

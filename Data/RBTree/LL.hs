@@ -24,6 +24,11 @@ insert a b = Fork B d e f
         GT -> balanceR c l y (ins x r)
         EQ -> t
 
+balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
+balanceL B (Fork R (Fork R a x b) y c) z d =
+    Fork R (Fork B a x b) y (Fork B c z d)
+balanceL k a x b = Fork k a x b
+
 balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
 balanceR B (Fork R a x b) y (Fork R c z d) =
     Fork R (Fork B a x b) y (Fork B c z d)
@@ -32,11 +37,6 @@ balanceR B (Fork R a x b) y (Fork R c z d) =
 balanceR k x y (Fork R c z d) =
     Fork k (Fork R x y c) z d
 balanceR k a x b = Fork k a x b
-
-balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balanceL B (Fork R (Fork R a x b) y c) z d =
-    Fork R (Fork B a x b) y (Fork B c z d)
-balanceL k a x b = Fork k a x b
 
 ----------------------------------------------------------------
 

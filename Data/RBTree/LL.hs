@@ -5,7 +5,6 @@ module Data.RBTree.LL (
   , insert
   , fromList
   , member
-  , isBalanced
   , valid
   ) where
 
@@ -19,10 +18,10 @@ insert a b = Fork B d e f
   where
     Fork _ d e f = ins a b
     ins x Leaf = Fork R Leaf x Leaf
-    ins x t@(Fork c l y r)
-        | x < y = balanceL c (ins x l) y r
-        | x > y = balanceR c l y (ins x r)
-        | otherwise = t
+    ins x t@(Fork c l y r) = case compare x y of
+        LT -> balanceL c (ins x l) y r
+        GT -> balanceR c l y (ins x r)
+        EQ -> t
 
 balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
 balanceR B (Fork R a x b) y (Fork R c z d) =

@@ -43,9 +43,9 @@ reds _ (Fork c l _ r) = reds c l && reds c r
 
 member :: Ord a => a -> RBTree a -> Bool
 member _ Leaf = False
-member x (Fork _ l y r)
-  | x > y     = member x r
-  | x < y     = member x l
-  | otherwise = True
+member x (Fork _ l y r) = case compare x y of
+    LT -> member x l
+    GT -> member x r
+    EQ -> True
 
 ----------------------------------------------------------------

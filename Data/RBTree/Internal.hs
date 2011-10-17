@@ -5,7 +5,7 @@ module Data.RBTree.Internal where
 data RBTree a = Leaf -- color is Black
               | Fork Color !(RBTree a) a !(RBTree a) deriving (Eq,Show)
 
-data Color = W | R | B | D deriving (Eq,Show)
+data Color = R | B deriving (Eq,Show)
 
 ----------------------------------------------------------------
 
@@ -30,7 +30,6 @@ blacks = blacks' 0
     blacks' n (Fork B l _ r) = blacks' n' l ++ blacks' n' r
       where
         n' = n + 1
-    blacks' _ (Fork _ _ _ _) = error "blacks"
 
 isRedSeparate :: RBTree a -> Bool
 isRedSeparate t = reds B t

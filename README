@@ -91,7 +91,7 @@ This is a purely functional left-leaning red-black tree.
 - Rosmarin, Max. 2011 (Aug.). Red-black trees in a functional context:
   Left-leaning and otherwise.
 
-Princeton University Department of Computer Science.
+	Princeton University Department of Computer Science.
 
 - The missing method: Deleting from Okasaki's red-black trees
 

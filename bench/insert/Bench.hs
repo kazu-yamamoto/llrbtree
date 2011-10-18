@@ -2,7 +2,7 @@
 
 module Main where
 
-import Random
+import System.Random
 #if METHOD == 1
 import Data.RBTree
 #else
@@ -17,7 +17,7 @@ seed :: Int
 seed = 54321
 
 ensure :: [Int] -> [Int]
-ensure xs = xs `deepseq` xs
+ensure xs = xs `deepseq` xs -- 'force' in the future
 
 genRandom :: Int -> [Int]
 genRandom n = take n . randoms . mkStdGen $ seed

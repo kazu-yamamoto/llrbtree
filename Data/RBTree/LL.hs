@@ -45,7 +45,7 @@ valid t = isBalanced t && isLeftLean t
 
 isLeftLean :: RBTree a -> Bool
 isLeftLean Leaf = True
-isLeftLean (Fork R _ _ (Fork R _ _ _)) = False -- right only and both!
+isLeftLean (Fork B _ _ (Fork R _ _ _)) = False -- right only and both!
 isLeftLean (Fork _ r _ l) = isLeftLean r && isLeftLean l
 
 ----------------------------------------------------------------

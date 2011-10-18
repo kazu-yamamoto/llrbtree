@@ -14,30 +14,36 @@ import Control.DeepSeq
 import Prelude hiding (lookup)
 
 seed :: Int
-seed = 12345
+seed = 54321
+
+ensure :: [Int] -> [Int]
+ensure xs = xs `deepseq` xs
+
+genRandom :: Int -> [Int]
+genRandom n = take n . randoms . mkStdGen $ seed
 
 main :: IO ()
 main = do
-    let !i1 = let l = [1..  1000] :: [Int] in l `deepseq` l
-        !i2 = let l = [1.. 10000] :: [Int] in l `deepseq` l
-        !i3 = let l = [1..100000] :: [Int] in l `deepseq` l
-        !d1 = let l = [  1000,  999..1] :: [Int] in l `deepseq` l
-        !d2 = let l = [ 10000, 9999..1] :: [Int] in l `deepseq` l
-        !d3 = let l = [100000,99999..1] :: [Int] in l `deepseq` l
-        !r1 = (take   1000 . randoms . mkStdGen $ seed) :: [Int]
-        !r2 = (take  10000 . randoms . mkStdGen $ seed) :: [Int]
-        !r3 = (take 100000 . randoms . mkStdGen $ seed) :: [Int]
+    let !i1 = ensure [1..  10000]
+        !i2 = ensure [1.. 100000]
+        !i3 = ensure [1..1000000]
+        !d1 = ensure [  10000,  9999..1]
+        !d2 = ensure [ 100000, 99999..1]
+        !d3 = ensure [1000000,999999..1]
+        !r1 = ensure $ genRandom   10000
+        !r2 = ensure $ genRandom  100000
+        !r3 = ensure $ genRandom 1000000
     defaultMain $
         bgroup "" [
-             bench "inc 10^3" $ nf fromList i1
-           , bench "inc 10^4" $ nf fromList i2
-           , bench "inc 10^5" $ nf fromList i3
-           , bench "dec 10^3" $ nf fromList d1
-           , bench "dec 10^4" $ nf fromList d2
-           , bench "dec 10^5" $ nf fromList d3
-           , bench "rnd 10^3" $ nf fromList r1
-           , bench "rnd 10^4" $ nf fromList r2
-           , bench "rnd 10^5" $ nf fromList r3
+             bench "inc 10^4" $ nf fromList i1
+           , bench "inc 10^5" $ nf fromList i2
+           , bench "inc 10^6" $ nf fromList i3
+           , bench "dec 10^4" $ nf fromList d1
+           , bench "dec 10^5" $ nf fromList d2
+           , bench "dec 10^6" $ nf fromList d3
+           , bench "rnd 10^4" $ nf fromList r1
+           , bench "rnd 10^5" $ nf fromList r2
+           , bench "rnd 10^6" $ nf fromList r3
            ]
 
 instance NFData a => NFData (RBTree a)

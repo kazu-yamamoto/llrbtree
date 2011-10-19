@@ -1,3 +1,13 @@
+(* USAGE
+ * $ coqc --version
+ * The Coq Proof Assistant, version 8.3pl2 (August 2011)
+ * compiled on Aug 25 2011 04:21:44 with OCaml 3.12.0
+ * $ time coqc -opt llrbtree.v
+ * real    6m49.834s
+ * user    6m47.449s
+ * sys     0m2.208s
+ *)
+
 Inductive Color : Set := R | B.
 
 Section RB.
@@ -546,3 +556,4 @@ Section RB.
     exists (S (S (S m1))); a.
     Qed.
     
+End RB.

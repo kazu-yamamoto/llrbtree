@@ -1,5 +1,8 @@
 This is a purely functional left-leaning red-black tree.
 
+Data.RBTree    --- Okasaki's red-black trees
+Data.RBTree.LL --- Left-leaning red-black trees
+
 ----------------------------------------------------------------
 * Histroy of imperative red-black trees
 
@@ -68,15 +71,26 @@ This is a purely functional left-leaning red-black tree.
 
 - Proof in Coq
 
-	Filliaˆtre, J.-C., & Letouzey, P.
-	Functors for Proofs and Programs.
-	Pages 370-384 of: Esop'04: European symposium on programming,
-	vol. LNCS 2986. Springer.
-	2004
+	C. Filliâtre and P. Letouzey
+	Functors for Proofs and Programs
+	In Proceedings of The European Symposium on Programming
+	volume 2986 of Lecture Notes in Computer Science
+	pages 370-384, April 2004.
+
+	http://www.lri.fr/~filliatr/ftp/publis/fpp.ps.gz
+
+	Formalization of a finite sets library in Coq
+
+	http://www.lri.fr/~filliatr/fsets/
 
 - Efﬁcient Veriﬁed Red-Black Trees
 
+	Andrew W. Appel
+	Efficient Verified Red-Black Trees
+	September 2011
 	2011
+
+	http://www.cs.princeton.edu/~appel/papers/redblack.pdf
 
 	My student Max Rosmarin (Rosmarin, 2011) studied the question
 	of whether using the left-leaning invariant would mix well

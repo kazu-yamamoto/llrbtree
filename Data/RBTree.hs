@@ -54,13 +54,18 @@ balanceR k a x b = Fork k a x b
 
 ----------------------------------------------------------------
 
-unbalancedL :: Color -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
+type RBTreeBDel a = (RBTree a, Bool)
+
+unbalancedL :: Color -> RBTree a -> a -> RBTree a -> RBTreeBDel a
 unbalancedL c (Fork B t1 x1 t2) x2 t3 = (balanceL B (Fork R t1 x1 t2) x2 t3, c == B)
 unbalancedL B (Fork R t1 x1 (Fork B t2 x2 t3)) x3 t4 = (Fork B t1 x1 (balanceL B (Fork R t2 x2 t3) x3 t4), False)
 unbalancedL _ _ _ _ = error "unbalancedL"
 
+-- The left tree lacks one Black node
 unbalancedR :: Color -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
+-- Decreasing one Black node in the right
 unbalancedR c t1 x1 (Fork B t2 x2 t3) = (balanceR B t1 x1 (Fork R t2 x2 t3), c == B)
+-- Takeing one Red node from the right and adding it to the right as Black
 unbalancedR B t1 x1 (Fork R (Fork B t2 x2 t3) x3 t4) = (Fork B (balanceR B t1 x1 (Fork R t2 x2 t3)) x3 t4, False)
 unbalancedR _ _ _ _ = error "unbalancedR"
 
@@ -69,25 +74,22 @@ unbalancedR _ _ _ _ = error "unbalancedR"
 deleteMin :: RBTree a -> RBTree a
 deleteMin t = t'
   where
-    (t', _, _) = deleteMin' t
+    ((t', _), _) = deleteMin' t
 
-deleteMin' :: RBTree a -> (RBTree a, a, Bool)
-deleteMin' Leaf = error "deleteMin'"
-deleteMin' (Fork B Leaf x Leaf) = (Leaf, x, True)
-deleteMin' (Fork B Leaf x (Fork R l y r)) = (Fork B l y r, x, False)
-deleteMin' (Fork B Leaf _ (Fork B _ _ _)) = error "deleteMin'"
-deleteMin' (Fork R Leaf x r) = (r, x, False)
-deleteMin' (Fork c l x r) = if d then
-                                (t',m,d')
-                            else
-                                (Fork c l' x r, m, False)
+deleteMin' :: RBTree a -> (RBTreeBDel a, a)
+deleteMin' Leaf                           = error "deleteMin'"
+deleteMin' (Fork B Leaf x Leaf)           = ((Leaf, True), x)
+deleteMin' (Fork B Leaf x (Fork R l y r)) = ((Fork B l y r, False), x)
+deleteMin' (Fork R Leaf x r)              = ((r, False), x)
+deleteMin' (Fork c l x r)                 = if d then (tD, m) else (tD', m)
   where
-    (l',m,d) = deleteMin' l
-    (t',d') = unbalancedR c l' x r
+    ((l',d),m) = deleteMin' l
+    tD  = unbalancedR c l' x r
+    tD' = (Fork c l' x r, False)
 
 ----------------------------------------------------------------
 
-blackify :: RBTree a -> (RBTree a, Bool)
+blackify :: RBTree a -> RBTreeBDel a
 blackify (Fork R l x r) = (Fork B l x r, False)
 blackify s              = (s, True)
 
@@ -96,7 +98,7 @@ delete x s = s'
   where
     (s',_) = delete' x s
     
-delete' :: Ord a => a -> RBTree a -> (RBTree a, Bool)
+delete' :: Ord a => a -> RBTree a -> RBTreeBDel a
 delete' _ Leaf = (Leaf, False)
 delete' x (Fork c l y r) = case compare x y of
     LT -> let (l',d) = delete' x l
@@ -107,6 +109,6 @@ delete' x (Fork c l y r) = case compare x y of
           in if d then unbalancedL c l y r' else (t, False)
     EQ -> case r of
         Leaf -> if c == B then blackify l else (l, False)
-        _ -> let (r',m,d) = deleteMin' r
+        _ -> let ((r',d),m) = deleteMin' r
                  t = Fork c l m r'
              in if d then unbalancedL c l m r' else (t, False)

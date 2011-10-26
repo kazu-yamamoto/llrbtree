@@ -60,8 +60,7 @@ unbalancedL B (Fork R t1 x1 (Fork B t2 x2 t3)) x3 t4 = (Fork B t1 x1 (balanceL B
 unbalancedL _ _ _ _ = error "unbalancedL"
 
 unbalancedR :: Color -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
-unbalancedR R t1 x1 (Fork B t2 x2 t3) = (balanceR B t1 x1 (Fork R t2 x2 t3), False)
-unbalancedR B t1 x1 (Fork B t2 x2 t3) = (balanceR B t1 x1 (Fork R t2 x2 t3), True)
+unbalancedR c t1 x1 (Fork B t2 x2 t3) = (balanceR B t1 x1 (Fork R t2 x2 t3), c == B)
 unbalancedR B t1 x1 (Fork R (Fork B t2 x2 t3) x3 t4) = (Fork B (balanceR B t1 x1 (Fork R t2 x2 t3)) x3 t4, False)
 unbalancedR _ _ _ _ = error "unbalancedR"
 

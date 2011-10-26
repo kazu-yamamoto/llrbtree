@@ -53,7 +53,6 @@ balanceR k a x b = Fork k a x b
 
 ----------------------------------------------------------------
 
--- xxx calling balanceR with B?
 unbalancedL :: Color -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
 unbalancedL R (Fork B t1 x1 t2) x2 t3 = (balanceL B (Fork R t1 x1 t2) x2 t3, False)
 unbalancedL B (Fork B t1 x1 t2) x2 t3 = (balanceL B (Fork R t1 x1 t2) x2 t3, True)
@@ -79,15 +78,10 @@ deleteMin' (Fork B Leaf x Leaf) = (Leaf, x, True)
 deleteMin' (Fork B Leaf x (Fork R l y r)) = (Fork B l y r, x, False)
 deleteMin' (Fork B Leaf _ (Fork B _ _ _)) = error "deleteMin'"
 deleteMin' (Fork R Leaf x r) = (r, x, False)
-deleteMin' (Fork B l x r) = if d then
-                          let (t',d') = unbalancedR B l' x r in (t',m,d')
-                       else
-                          (Fork B l' x r, m, False)
+deleteMin' (Fork c l x r) = if d then
+                                (t',m,d')
+                            else
+                                (Fork c l' x r, m, False)
   where
     (l',m,d) = deleteMin' l
-deleteMin' (Fork R l x r) = if d then
-                          let (t',d') = unbalancedR R l' x r in (t',m,d')
-                       else
-                          (Fork R l' x r, m, False)
-  where
-    (l',m,d) = deleteMin' l
+    (t',d') = unbalancedR c l' x r

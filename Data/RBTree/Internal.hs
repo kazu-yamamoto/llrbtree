@@ -5,7 +5,7 @@ module Data.RBTree.Internal where
 data RBTree a = Leaf -- color is Black
               | Fork Color !(RBTree a) a !(RBTree a) deriving (Eq,Show)
 
-data Color = R | B deriving (Eq,Show)
+data Color = B | R deriving (Eq,Show)
 
 ----------------------------------------------------------------
 

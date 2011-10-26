@@ -94,17 +94,19 @@ blackify s              = (s, True)
 delete :: Ord a => a -> RBTree a -> RBTree a
 delete x s = s'
   where
-    (s',_) = delete' s
-    delete' Leaf = (Leaf, False)
-    delete' (Fork c l y r) = case compare x y of
-        LT -> let (l',d) = delete' l
-                  t = Fork c l' y r
-              in if d then unbalancedR c l' y r else (t, False)
-        GT -> let (r',d) = delete' r
-                  t = Fork c l y r'
-              in if d then unbalancedL c l y r' else (t, False)
-        EQ -> case r of
-            Leaf -> if c == B then blackify l else (l, False)
-            _ -> let (r',m,d) = deleteMin' r
-                     t = Fork c l m r'
-                 in if d then unbalancedL c l m r' else (t, False)
+    (s',_) = delete' x s
+    
+delete' :: Ord a => a -> RBTree a -> (RBTree a, Bool)
+delete' _ Leaf = (Leaf, False)
+delete' x (Fork c l y r) = case compare x y of
+    LT -> let (l',d) = delete' x l
+              t = Fork c l' y r
+          in if d then unbalancedR c l' y r else (t, False)
+    GT -> let (r',d) = delete' x r
+              t = Fork c l y r'
+          in if d then unbalancedL c l y r' else (t, False)
+    EQ -> case r of
+        Leaf -> if c == B then blackify l else (l, False)
+        _ -> let (r',m,d) = deleteMin' r
+                 t = Fork c l m r'
+             in if d then unbalancedL c l m r' else (t, False)

@@ -71,13 +71,9 @@ deleteMin t = case deleteMin' (turnR t) of
 
 deleteMin' :: RBTree a -> RBTree a
 deleteMin' (Fork R Leaf _ Leaf) = Leaf
-deleteMin' (Fork R (Fork B (Fork B a t1 b) t2 c) t3 (Fork B (Fork R d t4 e) t5 f)) = Fork R (deleteMin' t) t4 (Fork B e t5 f)
-  where
-    t = Fork B (Fork R (Fork B a t1 b) t2 c) t3 d
-deleteMin' (Fork R (Fork B Leaf t2 c) t3 (Fork B (Fork R d t4 e) t5 f)) = Fork R (deleteMin' t) t4 (Fork B e t5 f)
-  where
-    t = Fork B (Fork R Leaf t2 c) t3 d
-deleteMin' (Fork R (Fork B (Fork B a t1 b) t2 c) t3 (Fork B d t4 e)) = balanceR B (deleteMin' (Fork R (Fork B a t1 b) t2 c)) t3 (Fork R d t4 e)
-deleteMin' (Fork R (Fork B Leaf t2 c) t3 (Fork B d t4 e)) = balanceR B (deleteMin' (Fork R Leaf t2 c)) t3 (Fork R d t4 e)
+deleteMin' (Fork R a@(Fork B (Fork B _ _ _) _ _) x (Fork B (Fork R b y c) z d)) = Fork R (Fork B (deleteMin' (turnR a)) x b) y (Fork B c z d)
+deleteMin' (Fork R a@(Fork B Leaf _ _) x (Fork B (Fork R b y c) z d)) = Fork R (Fork B (deleteMin' (turnR a)) x b) y (Fork B c z d)
+deleteMin' (Fork R r@(Fork B (Fork B _ _ _) _ _) x l@(Fork B _ _ _)) = balanceR B (deleteMin' (turnR r)) x (turnR l)
+deleteMin' (Fork R r@(Fork B Leaf _ _) x l@(Fork B _ _ _)) = balanceR B (deleteMin' (turnR r)) x (turnR l)
 deleteMin' (Fork c l x r) = Fork c (deleteMin' l) x r
 deleteMin' _ = error "deleteMin'"

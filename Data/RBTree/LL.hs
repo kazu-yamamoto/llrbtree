@@ -6,11 +6,27 @@ module Data.RBTree.LL (
   , fromList
   , toList
   , member
+  , deleteMin
   , valid
   ) where
 
 import Data.List (foldl')
 import Data.RBTree.Internal
+
+----------------------------------------------------------------
+
+valid :: RBTree a -> Bool
+valid t = isBalanced t && isLeftLean t
+
+isLeftLean :: RBTree a -> Bool
+isLeftLean Leaf = True
+isLeftLean (Fork B _ _ (Fork R _ _ _)) = False -- right only and both!
+isLeftLean (Fork _ r _ l) = isLeftLean r && isLeftLean l
+
+----------------------------------------------------------------
+
+fromList :: Ord a => [a] -> RBTree a
+fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
@@ -40,15 +56,28 @@ balanceR k a x b = Fork k a x b
 
 ----------------------------------------------------------------
 
-valid :: RBTree a -> Bool
-valid t = isBalanced t && isLeftLean t
+turnR :: RBTree a -> RBTree a
+turnR Leaf           = error "turnR"
+turnR (Fork _ l x r) = Fork R l x r
 
-isLeftLean :: RBTree a -> Bool
-isLeftLean Leaf = True
-isLeftLean (Fork B _ _ (Fork R _ _ _)) = False -- right only and both!
-isLeftLean (Fork _ r _ l) = isLeftLean r && isLeftLean l
+turnB :: RBTree a -> RBTree a
+turnB Leaf           = error "turnB"
+turnB (Fork _ l x r) = Fork B l x r
 
-----------------------------------------------------------------
+deleteMin :: RBTree a -> RBTree a
+deleteMin t = case deleteMin' (turnR t) of
+    Leaf -> Leaf
+    t'   -> turnB t'
 
-fromList :: Ord a => [a] -> RBTree a
-fromList = foldl' (flip insert) empty
+deleteMin' :: RBTree a -> RBTree a
+deleteMin' (Fork R Leaf _ Leaf) = Leaf
+deleteMin' (Fork R (Fork B (Fork B a t1 b) t2 c) t3 (Fork B (Fork R d t4 e) t5 f)) = Fork R (deleteMin' t) t4 (Fork B e t5 f)
+  where
+    t = Fork B (Fork R (Fork B a t1 b) t2 c) t3 d
+deleteMin' (Fork R (Fork B Leaf t2 c) t3 (Fork B (Fork R d t4 e) t5 f)) = Fork R (deleteMin' t) t4 (Fork B e t5 f)
+  where
+    t = Fork B (Fork R Leaf t2 c) t3 d
+deleteMin' (Fork R (Fork B (Fork B a t1 b) t2 c) t3 (Fork B d t4 e)) = balanceR B (deleteMin' (Fork R (Fork B a t1 b) t2 c)) t3 (Fork R d t4 e)
+deleteMin' (Fork R (Fork B Leaf t2 c) t3 (Fork B d t4 e)) = balanceR B (deleteMin' (Fork R Leaf t2 c)) t3 (Fork R d t4 e)
+deleteMin' (Fork c l x r) = Fork c (deleteMin' l) x r
+deleteMin' _ = error "deleteMin'"

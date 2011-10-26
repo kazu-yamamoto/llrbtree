@@ -6,6 +6,7 @@ module Data.RBTree (
   , fromList
   , toList
   , member
+  , delete
   , deleteMin
   , valid
   ) where
@@ -84,3 +85,39 @@ deleteMin' (Fork c l x r) = if d then
   where
     (l',m,d) = deleteMin' l
     (t',d') = unbalancedR c l' x r
+
+----------------------------------------------------------------
+
+blackify :: RBTree a -> (RBTree a, Bool)
+blackify (Fork R l x r) = (Fork B l x r, False)
+blackify s              = (s, True)
+
+delete :: Ord a => a -> RBTree a -> RBTree a
+delete x s = s'
+  where
+    (s',_) = delete' s
+    delete' Leaf = (Leaf, False)
+    delete' (Fork B l y r) = case compare x y of
+        LT -> let (l',d) = delete' l
+                  t = Fork B l' y r
+              in if d then unbalancedR B l' y r else (t, False)
+        GT -> let (r',d) = delete' r
+                  t = Fork B l y r'
+              in if d then unbalancedL B l y r' else (t, False)
+        EQ -> case r of
+            Leaf -> blackify l
+            _ -> let (r',m,d) = deleteMin' r
+                     t = Fork B l m r'
+                 in if d then unbalancedL B l m r' else (t, False)
+    delete' (Fork R l y r) = case compare x y of
+        LT -> let (l',d) = delete' l
+                  t = Fork R l' y r
+              in if d then unbalancedR R l' y r else (t, False)
+        GT -> let (r',d) = delete' r
+                  t = Fork R l y r'
+              in if d then unbalancedL R l y r' else (t, False)
+        EQ -> case r of
+            Leaf -> (l, False)
+            _ -> let (r',m,d) = deleteMin' r
+                     t = Fork R l m r'
+                 in if d then unbalancedL R l m r' else (t, False)

@@ -55,3 +55,13 @@ toList t = inorder t []
   where
     inorder Leaf xs = xs
     inorder (Fork _ l x r) xs = inorder l (x : inorder r xs)
+
+----------------------------------------------------------------
+
+turnR :: RBTree a -> RBTree a
+turnR Leaf           = error "turnR"
+turnR (Fork _ l x r) = Fork R l x r
+
+turnB :: RBTree a -> RBTree a
+turnB Leaf           = error "turnB"
+turnB (Fork _ l x r) = Fork B l x r

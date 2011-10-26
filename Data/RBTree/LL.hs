@@ -56,14 +56,6 @@ balanceR k a x b = Fork k a x b
 
 ----------------------------------------------------------------
 
-turnR :: RBTree a -> RBTree a
-turnR Leaf           = error "turnR"
-turnR (Fork _ l x r) = Fork R l x r
-
-turnB :: RBTree a -> RBTree a
-turnB Leaf           = error "turnB"
-turnB (Fork _ l x r) = Fork B l x r
-
 deleteMin :: RBTree a -> RBTree a
 deleteMin t = case deleteMin' (turnR t) of
     Leaf -> Leaf

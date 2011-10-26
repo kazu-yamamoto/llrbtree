@@ -90,8 +90,8 @@ deleteMin' (Fork c l x r)                 = if d then (tD, m) else (tD', m)
 ----------------------------------------------------------------
 
 blackify :: RBTree a -> RBTreeBDel a
-blackify (Fork R l x r) = (Fork B l x r, False)
-blackify s              = (s, True)
+blackify s@(Fork R _ _ _) = (turnB s, False)
+blackify s                = (s, True)
 
 delete :: Ord a => a -> RBTree a -> RBTree a
 delete x s = s'

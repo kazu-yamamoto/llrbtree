@@ -34,6 +34,7 @@ prop_member (x:xs) = member x t
   where
     t = fromList (x:xs)
 
+{-
 prop_delete :: [Int] -> Bool
 prop_delete [] = True
 prop_delete (x:xs) = valid t'
@@ -49,6 +50,7 @@ prop_delete2 (x:xs) = ys == zs
     t' = delete x t
     ys = toList t'
     zs = L.delete x . nub . sort $ xs
+-}
 
 prop_deleteMin :: [Int] -> Bool
 prop_deleteMin [] = True

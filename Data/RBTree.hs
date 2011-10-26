@@ -55,8 +55,7 @@ balanceR k a x b = Fork k a x b
 ----------------------------------------------------------------
 
 unbalancedL :: Color -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
-unbalancedL R (Fork B t1 x1 t2) x2 t3 = (balanceL B (Fork R t1 x1 t2) x2 t3, False)
-unbalancedL B (Fork B t1 x1 t2) x2 t3 = (balanceL B (Fork R t1 x1 t2) x2 t3, True)
+unbalancedL c (Fork B t1 x1 t2) x2 t3 = (balanceL B (Fork R t1 x1 t2) x2 t3, c == B)
 unbalancedL B (Fork R t1 x1 (Fork B t2 x2 t3)) x3 t4 = (Fork B t1 x1 (balanceL B (Fork R t2 x2 t3) x3 t4), False)
 unbalancedL _ _ _ _ = error "unbalancedL"
 
@@ -97,27 +96,15 @@ delete x s = s'
   where
     (s',_) = delete' s
     delete' Leaf = (Leaf, False)
-    delete' (Fork B l y r) = case compare x y of
+    delete' (Fork c l y r) = case compare x y of
         LT -> let (l',d) = delete' l
-                  t = Fork B l' y r
-              in if d then unbalancedR B l' y r else (t, False)
+                  t = Fork c l' y r
+              in if d then unbalancedR c l' y r else (t, False)
         GT -> let (r',d) = delete' r
-                  t = Fork B l y r'
-              in if d then unbalancedL B l y r' else (t, False)
+                  t = Fork c l y r'
+              in if d then unbalancedL c l y r' else (t, False)
         EQ -> case r of
-            Leaf -> blackify l
+            Leaf -> if c == B then blackify l else (l, False)
             _ -> let (r',m,d) = deleteMin' r
-                     t = Fork B l m r'
-                 in if d then unbalancedL B l m r' else (t, False)
-    delete' (Fork R l y r) = case compare x y of
-        LT -> let (l',d) = delete' l
-                  t = Fork R l' y r
-              in if d then unbalancedR R l' y r else (t, False)
-        GT -> let (r',d) = delete' r
-                  t = Fork R l y r'
-              in if d then unbalancedL R l y r' else (t, False)
-        EQ -> case r of
-            Leaf -> (l, False)
-            _ -> let (r',m,d) = deleteMin' r
-                     t = Fork R l m r'
-                 in if d then unbalancedL R l m r' else (t, False)
+                     t = Fork c l m r'
+                 in if d then unbalancedL c l m r' else (t, False)

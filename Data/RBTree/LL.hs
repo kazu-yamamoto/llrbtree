@@ -71,9 +71,21 @@ deleteMin t = case deleteMin' (turnR t) of
 
 deleteMin' :: RBTree a -> RBTree a
 deleteMin' (Fork R Leaf _ Leaf) = Leaf
-deleteMin' (Fork R a@(Fork B (Fork B _ _ _) _ _) x (Fork B (Fork R b y c) z d)) = Fork R (Fork B (deleteMin' (turnR a)) x b) y (Fork B c z d)
-deleteMin' (Fork R a@(Fork B Leaf _ _) x (Fork B (Fork R b y c) z d)) = Fork R (Fork B (deleteMin' (turnR a)) x b) y (Fork B c z d)
-deleteMin' (Fork R r@(Fork B (Fork B _ _ _) _ _) x l@(Fork B _ _ _)) = balanceR B (deleteMin' (turnR r)) x (turnR l)
-deleteMin' (Fork R r@(Fork B Leaf _ _) x l@(Fork B _ _ _)) = balanceR B (deleteMin' (turnR r)) x (turnR l)
+deleteMin' (Fork R l x r)
+  | isBB && isBR = Fork R (Fork B (deleteMin' (turnR l)) x b) y (Fork B c z d)
+  | isBB         = balanceR B (deleteMin' (turnR l)) x (turnR r)
+  where
+    isBB = isBlackBlack l
+    isBR = isBlackRed r
+    Fork B (Fork R b y c) z d = r
 deleteMin' (Fork c l x r) = Fork c (deleteMin' l) x r
 deleteMin' _ = error "deleteMin'"
+
+isBlackBlack :: RBTree a -> Bool
+isBlackBlack (Fork B (Fork B _ _ _) _ _) = True
+isBlackBlack (Fork B Leaf _ _)           = True
+isBlackBlack _                           = False
+
+isBlackRed :: RBTree a -> Bool
+isBlackRed (Fork B (Fork R _ _ _) _ _) = True
+isBlackRed _                           = False

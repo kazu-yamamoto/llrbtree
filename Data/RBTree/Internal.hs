@@ -88,3 +88,9 @@ isBlackLeftRed :: RBTree a -> Bool
 isBlackLeftRed (Fork B l _ _)
   | isRed l        = True
 isBlackLeftRed _   = False
+
+----------------------------------------------------------------
+
+left :: RBTree a -> RBTree a
+left (Fork _ l _ _ ) = l
+left _               = error "left"

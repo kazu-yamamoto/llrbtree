@@ -7,6 +7,7 @@ module Data.RBTree.LL (
   , toList
   , member
   , deleteMin
+  , deleteMax
   , valid
   ) where
 
@@ -67,17 +68,29 @@ deleteMin' (Fork R l x r)
   | isBB && isBR = Fork R (Fork B (deleteMin' (turnR l)) x b) y (Fork B c z d)
   | isBB         = balanceR B (deleteMin' (turnR l)) x (turnR r)
   where
-    isBB = isBlackBlack l
-    isBR = isBlackRed r
+    isBB = isBlackLeftBlack l
+    isBR = isBlackLeftRed r
     Fork B (Fork R b y c) z d = r
-deleteMin' (Fork c l x r) = Fork c (deleteMin' l) x r
+deleteMin' (Fork k l x r) = Fork k (deleteMin' l) x r
 deleteMin' _ = error "deleteMin'"
 
-isBlackBlack :: RBTree a -> Bool
-isBlackBlack (Fork B (Fork B _ _ _) _ _) = True
-isBlackBlack (Fork B Leaf _ _)           = True
-isBlackBlack _                           = False
+----------------------------------------------------------------
 
-isBlackRed :: RBTree a -> Bool
-isBlackRed (Fork B (Fork R _ _ _) _ _) = True
-isBlackRed _                           = False
+deleteMax :: RBTree a -> RBTree a
+deleteMax t = case deleteMax' (turnR t) of
+    Leaf -> Leaf
+    t'   -> turnB t'
+
+deleteMax' :: RBTree a -> RBTree a
+deleteMax' (Fork R Leaf _ Leaf) = Leaf
+deleteMax' (Fork k (Fork R a x b) y c) = balanceR k a x (deleteMax' (Fork R b y c))
+deleteMax' (Fork R l y r)
+  | isBB && isBR = Fork R (turnB a) x (balanceR B b y (deleteMax' (turnR r)))
+  | isBB         = balanceR B (turnR l) y (deleteMax' (turnR r))
+  where
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
+    Fork B a@(Fork R _ _ _) x b = l
+deleteMax' (Fork k l x r) = Fork k l x (deleteMax' r)
+deleteMax' _ = error "deleteMax'"
+

@@ -83,9 +83,24 @@ deleteMin' t@(Fork R l x r)
   | otherwise    = Fork R (Fork B (deleteMin' la) lx lb) x r -- la is Red
   where
     isBB = isBlack (left l)
-    isBR = isBlackLeftRed r
-    Fork B la lx lb = l
+    isBR = isRed (left r)
+    Fork B la lx lb = l -- to skip Black
 deleteMin' _ = error "deleteMin'"
+
+-- Simplified but not keeping the invariant.
+
+{-
+deleteMin' :: RBTree a -> RBTree a
+deleteMin' (Fork R Leaf _ Leaf) = Leaf
+deleteMin' t@(Fork R l x r)
+  | isBB && isBR = hardMin t
+  | isBB         = balanceR B (deleteMin' (turnR l)) x (turnR r)
+  where
+    isBB = isBlack l && isBlack (left l)
+    isBR = isRed (left r)
+deleteMin' (Fork k l x r) = Fork k (deleteMin' l) x r
+deleteMin' _ = error "deleteMin'"
+-}
 
 {-
   The hardest case. See slide 61 of:
@@ -119,15 +134,29 @@ deleteMax' (Fork R Leaf _ Leaf) = Leaf -- deleting the maximum
 deleteMax' t@(Fork R l x r)
   | isRed l      = rotateR t
   -- Black-Black
-  | isBB && isBR = Fork R (turnB la) lx (balanceR B lb x (deleteMax' (turnR r)))
+  | isBB && isBR = hardMax t
   | isBB         = balanceR B (turnR l) x (deleteMax' (turnR r))
   -- Black-Red
   | otherwise    = Fork R l x (rotateR r)
   where
     isBB = isBlack (left r)
-    isBR = isBlackLeftRed l
-    Fork B la@(Fork R _ _ _) lx lb = l
+    isBR = isRed (left l) -- && isBlack l
 deleteMax' _ = error "deleteMax'"
+
+-- Simplified but not keeping the invariant.
+{-
+deleteMax' :: RBTree a -> RBTree a
+deleteMax' (Fork R Leaf _ Leaf) = Leaf
+deleteMax' t@(Fork _ (Fork R _ _ _) _ _) = rotateR t
+deleteMax' t@(Fork R l x r)
+  | isBB && isBR = hardMax t
+  | isBB         = balanceR B (turnR l) x (deleteMax' (turnR r))
+  where
+    isBB = isBlack (left r)
+    isBR = isRed (left l) -- && isBlack l
+deleteMax' (Fork k l x r) = Fork k l x (deleteMax' r)
+deleteMax' _ = error "deleteMax'"
+-}
 
 {-
   rotateR ensures that the maximum node is in the form of (Fork R Leaf _ Leaf).
@@ -136,6 +165,16 @@ deleteMax' _ = error "deleteMax'"
 rotateR :: RBTree a -> RBTree a
 rotateR (Fork k (Fork R a x b) y c) = balanceR k a x (deleteMax' (Fork R b y c))
 rotateR _ = error "rorateR"
+
+{-
+  The hardest case. See slide 56 of:
+	http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf
+-}
+
+hardMax :: RBTree a -> RBTree a
+hardMax (Fork R (Fork B la@(Fork R _ _ _) lx lb) x r)
+    = Fork R (turnB la) lx (balanceR B lb x (deleteMax' (turnR r)))
+hardMax _              = error "hardMax"
 
 ----------------------------------------------------------------
 

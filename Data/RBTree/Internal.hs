@@ -32,7 +32,7 @@ blacks = blacks' 0
         n' = n + 1
 
 isRedSeparate :: RBTree a -> Bool
-isRedSeparate t = reds B t
+isRedSeparate = reds B
 
 reds :: Color -> RBTree t -> Bool
 reds _ Leaf = True
@@ -76,18 +76,6 @@ isBlack _               = False
 isRed :: RBTree a -> Bool
 isRed (Fork R _ _ _ ) = True
 isRed _               = False
-
-----------------------------------------------------------------
-
-isBlackLeftBlack :: RBTree a -> Bool
-isBlackLeftBlack (Fork B l _ _)
-  | isBlack l      = True
-isBlackLeftBlack _ = False
-
-isBlackLeftRed :: RBTree a -> Bool
-isBlackLeftRed (Fork B l _ _)
-  | isRed l        = True
-isBlackLeftRed _   = False
 
 ----------------------------------------------------------------
 

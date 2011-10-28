@@ -14,6 +14,7 @@ tests = [ testGroup "Property Test" [
              , testProperty "delete"             prop_delete
              , testProperty "deleteRoot"         prop_deleteRoot
              , testProperty "deleteLeaf"         prop_deleteLeaf
+             , testProperty "deleteNon"          prop_deleteNon
              , testProperty "delete2"            prop_delete2
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
@@ -51,6 +52,13 @@ prop_deleteLeaf xs = valid t'
   where
     t = fromList xs
     t' = delete (last xs) t
+
+prop_deleteNon :: [Int] -> Int -> Bool
+prop_deleteNon [] _ = True
+prop_deleteNon xs x = valid t'
+  where
+    t = fromList xs
+    t' = delete x t
 
 prop_delete :: [Int] -> Bool
 prop_delete [] = True

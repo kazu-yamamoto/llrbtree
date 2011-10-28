@@ -179,6 +179,11 @@ hardMax _              = error "hardMax"
 
 ----------------------------------------------------------------
 
+isBlackLeftBlack :: RBTree a -> Bool
+isBlackLeftBlack (Fork B Leaf _ _)           = True
+isBlackLeftBlack (Fork B (Fork B _ _ _) _ _) = True
+isBlackLeftBlack _                           = False
+
 delete :: Ord a => a -> RBTree a -> RBTree a
 delete kx t = case delete' kx (turnR t) of
     Leaf -> Leaf
@@ -196,7 +201,7 @@ deleteLT kx R l x r
   | isBB && isBR = Fork R (Fork B (delete' kx (turnR l)) x b) y (Fork B c z d)
   | isBB         = balanceR B (delete' kx (turnR l)) x (turnR r)
   where
-    isBB = isBlack l && isBlack (left l)
+    isBB = isBlackLeftBlack l
     isBR = isRed (left r)
     Fork B (Fork R b y c) z d = r
 deleteLT kx k l x r = Fork k (delete' kx l) x r
@@ -207,7 +212,7 @@ deleteGT kx R l x r
   | isBB && isBR = Fork R (turnB la) lx (balanceR B lb x (delete' kx (turnR r)))
   | isBB         = balanceR B (turnR l) x (delete' kx (turnR r))
   where
-    isBB = isBlack (left r)
+    isBB = isBlackLeftBlack r
     isBR = isRed (left l) -- && isBlack l
     Fork B la@(Fork R _ _ _) lx lb = l
 deleteGT kx R l x r = Fork R l x (delete' kx r)

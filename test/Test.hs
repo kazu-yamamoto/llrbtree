@@ -8,20 +8,17 @@ import Test.Framework.Providers.QuickCheck2
 
 tests :: [Test]
 tests = [ testGroup "Property Test" [
-               {-
                testProperty "fromList"           prop_fromList
              , testProperty "toList"             prop_toList
              , testProperty "member"             prop_member
-
-             , -} testProperty "delete"             prop_delete
-             , testProperty "delete'"            prop_delete'
+             , testProperty "delete"             prop_delete
+             , testProperty "deleteRoot"         prop_deleteRoot
+             , testProperty "deleteLeaf"         prop_deleteLeaf
              , testProperty "delete2"            prop_delete2
-{-
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
--}
              ]
         ]
 
@@ -41,19 +38,27 @@ prop_member (x:xs) = member x t
   where
     t = fromList (x:xs)
 
-prop_delete :: [Int] -> Bool
-prop_delete [] = True
-prop_delete xxs@(x:_) = valid t'
+prop_deleteRoot :: [Int] -> Bool
+prop_deleteRoot [] = True
+prop_deleteRoot xxs@(x:_) = valid t'
   where
     t = fromList xxs
     t' = delete x t
 
-prop_delete' :: [Int] -> Bool
-prop_delete' [] = True
-prop_delete' xs = valid t'
+prop_deleteLeaf :: [Int] -> Bool
+prop_deleteLeaf [] = True
+prop_deleteLeaf xs = valid t'
   where
     t = fromList xs
     t' = delete (last xs) t
+
+prop_delete :: [Int] -> Bool
+prop_delete [] = True
+prop_delete xs = valid t'
+  where
+    t = fromList xs
+    n = length xs `div` 2
+    t' = delete (xs !! n) t
 
 prop_delete2 :: [Int] -> Bool
 prop_delete2 [] = True

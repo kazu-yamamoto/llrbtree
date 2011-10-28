@@ -144,6 +144,7 @@ deleteMax' t@(Fork R l x r)
 deleteMax' _ = error "deleteMax'"
 
 -- Simplified but not keeping the invariant.
+
 {-
 deleteMax' :: RBTree a -> RBTree a
 deleteMax' (Fork R Leaf _ Leaf) = Leaf
@@ -154,7 +155,7 @@ deleteMax' t@(Fork R l x r)
   where
     isBB = isBlack (left r)
     isBR = isRed (left l) -- && isBlack l
-deleteMax' (Fork k l x r) = Fork k l x (deleteMax' r)
+deleteMax' (Fork R l x r) = Fork R l x (deleteMax' r)
 deleteMax' _ = error "deleteMax'"
 -}
 
@@ -209,7 +210,8 @@ deleteGT kx R l x r
     isBB = isBlack (left r)
     isBR = isRed (left l) -- && isBlack l
     Fork B la@(Fork R _ _ _) lx lb = l
-deleteGT kx k l x r = Fork k l x (delete' kx r)
+deleteGT kx R l x r = Fork R l x (delete' kx r)
+deleteGT _ _ _ _ _ = error "deleteGT"
 
 deleteEQ :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
 deleteEQ _ R Leaf _ Leaf = Leaf
@@ -222,7 +224,7 @@ deleteEQ _ R l _ r
     isBR = isRed (left l) -- && isBlack l
     Fork B la@(Fork R _ _ _) lx lb = l
     m = minimum r
-deleteEQ _ k l _ r@(Fork B rl@(Fork R _ _ _) rx rr) = Fork k l m (Fork B (deleteMin' rl) rx rr)
+deleteEQ _ R l _ r@(Fork B rl rx rr) = Fork R l m (Fork B (deleteMin' rl) rx rr) -- rl is Red
   where
     m = minimum r
 deleteEQ _ _ _ _ _ = error "deleteEQ"

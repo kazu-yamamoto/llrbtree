@@ -29,28 +29,27 @@ fromList = foldl' (flip insert) empty
 --
 
 insert :: Ord a => a -> RBTree a -> RBTree a
-insert a b = Fork B d e f
+insert kx t = turnB (ins t)
   where
-    Fork _ d e f = ins a b
-    ins x Leaf = Fork R Leaf x Leaf
-    ins x t@(Fork c l y r) = case compare x y of
-        LT -> balanceL c (ins x l) y r
-        GT -> balanceR c l y (ins x r)
-        EQ -> t
+    ins Leaf = Fork R Leaf kx Leaf
+    ins s@(Fork k l x r) = case compare kx x of
+        LT -> balanceL k (ins l) x r
+        GT -> balanceR k l x (ins r)
+        EQ -> s
 
 balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
 balanceL B (Fork R (Fork R a x b) y c) z d =
     Fork R (Fork B a x b) y (Fork B c z d)
 balanceL B (Fork R a x (Fork R b y c)) z d =
     Fork R (Fork B a x b) y (Fork B c z d)
-balanceL k a x b = Fork k a x b
+balanceL k l x r = Fork k l x r
 
 balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
 balanceR B a x (Fork R b y (Fork R c z d)) =
     Fork R (Fork B a x b) y (Fork B c z d)
 balanceR B a x (Fork R (Fork R b y c) z d) =
     Fork R (Fork B a x b) y (Fork B c z d)
-balanceR k a x b = Fork k a x b
+balanceR k l x r = Fork k l x r
 
 ----------------------------------------------------------------
 
@@ -72,9 +71,9 @@ unbalancedR _ _ _ _ = error "unbalancedR"
 ----------------------------------------------------------------
 
 deleteMin :: RBTree a -> RBTree a
-deleteMin t = t'
+deleteMin t = s
   where
-    ((t', _), _) = deleteMin' t
+    ((s, _), _) = deleteMin' t
 
 deleteMin' :: RBTree a -> (RBTreeBDel a, a)
 deleteMin' Leaf                           = error "deleteMin'"
@@ -94,9 +93,9 @@ blackify s@(Fork R _ _ _) = (turnB s, False)
 blackify s                = (s, True)
 
 delete :: Ord a => a -> RBTree a -> RBTree a
-delete x s = s'
+delete x t = s
   where
-    (s',_) = delete' x s
+    (s,_) = delete' x t
     
 delete' :: Ord a => a -> RBTree a -> RBTreeBDel a
 delete' _ Leaf = (Leaf, False)

@@ -34,19 +34,18 @@ fromList = foldl' (flip insert) empty
 ----------------------------------------------------------------
 
 insert :: Ord a => a -> RBTree a -> RBTree a
-insert a b = Fork B d e f
+insert kx t = turnB (ins t)
   where
-    Fork _ d e f = ins a b
-    ins x Leaf = Fork R Leaf x Leaf
-    ins x t@(Fork c l y r) = case compare x y of
-        LT -> balanceL c (ins x l) y r
-        GT -> balanceR c l y (ins x r)
-        EQ -> t
+    ins Leaf = Fork R Leaf kx Leaf
+    ins s@(Fork k l x r) = case compare kx x of
+        LT -> balanceL k (ins l) x r
+        GT -> balanceR k l x (ins r)
+        EQ -> s
 
 balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
 balanceL B (Fork R (Fork R a x b) y c) z d =
     Fork R (Fork B a x b) y (Fork B c z d)
-balanceL k a x b = Fork k a x b
+balanceL k l x r = Fork k l x r
 
 balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
 balanceR B (Fork R a x b) y (Fork R c z d) =
@@ -55,7 +54,7 @@ balanceR B (Fork R a x b) y (Fork R c z d) =
 -- x is either Fork or Leaf
 balanceR k x y (Fork R c z d) =
     Fork k (Fork R x y c) z d
-balanceR k a x b = Fork k a x b
+balanceR k l x r = Fork k l x r
 
 ----------------------------------------------------------------
 
@@ -74,7 +73,7 @@ isBlackLeftRed _                           = False
 deleteMin :: RBTree a -> RBTree a
 deleteMin t = case deleteMin' (turnR t) of
     Leaf -> Leaf
-    t'   -> turnB t'
+    s    -> turnB s
 
 {-
   This deleteMin' keeps an invariant: the target node is always red.
@@ -128,7 +127,7 @@ hardMin _ = error "hardMin"
 deleteMax :: RBTree a -> RBTree a
 deleteMax t = case deleteMax' (turnR t) of
     Leaf -> Leaf
-    t'   -> turnB t'
+    s    -> turnB s
 
 {-
   This deleteMax' keeps an invariant: the target node is always red.

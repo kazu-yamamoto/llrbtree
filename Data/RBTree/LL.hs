@@ -59,6 +59,18 @@ balanceR k a x b = Fork k a x b
 
 ----------------------------------------------------------------
 
+isBlackLeftBlack :: RBTree a -> Bool
+isBlackLeftBlack (Fork B Leaf _ _)           = True
+isBlackLeftBlack (Fork B (Fork B _ _ _) _ _) = True
+isBlackLeftBlack _                           = False
+
+
+isBlackLeftRed :: RBTree a -> Bool
+isBlackLeftRed (Fork B (Fork R _ _ _) _ _) = True
+isBlackLeftRed _                           = False
+
+----------------------------------------------------------------
+
 deleteMin :: RBTree a -> RBTree a
 deleteMin t = case deleteMin' (turnR t) of
     Leaf -> Leaf
@@ -82,13 +94,12 @@ deleteMin' t@(Fork R l x r)
   -- Black-Red
   | otherwise    = Fork R (Fork B (deleteMin' la) lx lb) x r -- la is Red
   where
-    isBB = isBlack (left l)
-    isBR = isRed (left r)
+    isBB = isBlackLeftBlack l
+    isBR = isBlackLeftRed r
     Fork B la lx lb = l -- to skip Black
 deleteMin' _ = error "deleteMin'"
 
 -- Simplified but not keeping the invariant.
-
 {-
 deleteMin' :: RBTree a -> RBTree a
 deleteMin' (Fork R Leaf _ Leaf) = Leaf
@@ -96,8 +107,8 @@ deleteMin' t@(Fork R l x r)
   | isBB && isBR = hardMin t
   | isBB         = balanceR B (deleteMin' (turnR l)) x (turnR r)
   where
-    isBB = isBlack l && isBlack (left l)
-    isBR = isRed (left r)
+    isBB = isBlackLeftBlack l
+    isBR = isBlackLeftRed r
 deleteMin' (Fork k l x r) = Fork k (deleteMin' l) x r
 deleteMin' _ = error "deleteMin'"
 -}
@@ -139,12 +150,11 @@ deleteMax' t@(Fork R l x r)
   -- Black-Red
   | otherwise    = Fork R l x (rotateR r)
   where
-    isBB = isBlack (left r)
-    isBR = isRed (left l) -- && isBlack l
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
 deleteMax' _ = error "deleteMax'"
 
 -- Simplified but not keeping the invariant.
-
 {-
 deleteMax' :: RBTree a -> RBTree a
 deleteMax' (Fork R Leaf _ Leaf) = Leaf
@@ -153,8 +163,8 @@ deleteMax' t@(Fork R l x r)
   | isBB && isBR = hardMax t
   | isBB         = balanceR B (turnR l) x (deleteMax' (turnR r))
   where
-    isBB = isBlack (left r)
-    isBR = isRed (left l) -- && isBlack l
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
 deleteMax' (Fork R l x r) = Fork R l x (deleteMax' r)
 deleteMax' _ = error "deleteMax'"
 -}
@@ -179,11 +189,6 @@ hardMax _              = error "hardMax"
 
 ----------------------------------------------------------------
 
-isBlackLeftBlack :: RBTree a -> Bool
-isBlackLeftBlack (Fork B Leaf _ _)           = True
-isBlackLeftBlack (Fork B (Fork B _ _ _) _ _) = True
-isBlackLeftBlack _                           = False
-
 delete :: Ord a => a -> RBTree a -> RBTree a
 delete kx t = case delete' kx (turnR t) of
     Leaf -> Leaf
@@ -202,7 +207,7 @@ deleteLT kx R l x r
   | isBB         = balanceR B (delete' kx (turnR l)) x (turnR r)
   where
     isBB = isBlackLeftBlack l
-    isBR = isRed (left r)
+    isBR = isBlackLeftRed r
     Fork B (Fork R b y c) z d = r
 deleteLT kx k l x r = Fork k (delete' kx l) x r
 
@@ -213,7 +218,7 @@ deleteGT kx R l x r
   | isBB         = balanceR B (turnR l) x (delete' kx (turnR r))
   where
     isBB = isBlackLeftBlack r
-    isBR = isRed (left l) -- && isBlack l
+    isBR = isBlackLeftRed l
     Fork B la@(Fork R _ _ _) lx lb = l
 deleteGT kx R l x r = Fork R l x (delete' kx r)
 deleteGT _ _ _ _ _ = error "deleteGT"
@@ -225,8 +230,8 @@ deleteEQ _ R l _ r
   | isBB && isBR = balanceR R (turnB la) lx (balanceR B lb m (deleteMin' (turnR r)))
   | isBB         = balanceR B (turnR l) m (deleteMin' (turnR r))
   where
-    isBB = isBlack (left r)
-    isBR = isRed (left l) -- && isBlack l
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
     Fork B la@(Fork R _ _ _) lx lb = l
     m = minimum r
 deleteEQ _ R l _ r@(Fork B rl rx rr) = Fork R l m (Fork B (deleteMin' rl) rx rr) -- rl is Red

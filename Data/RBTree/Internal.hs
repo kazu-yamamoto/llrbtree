@@ -79,12 +79,6 @@ isRed _               = False
 
 ----------------------------------------------------------------
 
-left :: RBTree a -> RBTree a
-left (Fork _ l _ _ ) = l
-left _               = error "left"
-
-----------------------------------------------------------------
-
 showTree :: Show a => RBTree a -> String
 showTree = showTree' ""
 

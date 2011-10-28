@@ -34,27 +34,26 @@ fromList = foldl' (flip insert) empty
 ----------------------------------------------------------------
 
 insert :: Ord a => a -> RBTree a -> RBTree a
-insert kx t = turnB (ins t)
-  where
-    ins Leaf = Fork R Leaf kx Leaf
-    ins s@(Fork k l x r) = case compare kx x of
-        LT -> balanceL k (ins l) x r
-        GT -> balanceR k l x (ins r)
-        EQ -> s
+insert x t = turnB (insert' x t)
+
+insert' :: Ord a => a -> RBTree a -> RBTree a
+insert' kx Leaf = Fork R Leaf kx Leaf
+insert' kx t@(Fork c l x r) = case compare kx x of
+    LT -> balanceL c (insert' kx l) x r
+    GT -> balanceR c l x (insert' kx r)
+    EQ -> t
 
 balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balanceL B (Fork R (Fork R a x b) y c) z d =
-    Fork R (Fork B a x b) y (Fork B c z d)
-balanceL k l x r = Fork k l x r
+balanceL B (Fork R ll@(Fork R _ _ _) lx lr) x r =
+    Fork R (turnB ll) lx (Fork B lr x r)
+balanceL c l x r = Fork c l x r
 
 balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balanceR B (Fork R a x b) y (Fork R c z d) =
-    Fork R (Fork B a x b) y (Fork B c z d)
+balanceR B l@(Fork R _ _ _) x r@(Fork R _ _ _) = Fork R (turnB l) x (turnB r)
 -- x is Black since Red eliminated by the case above
 -- x is either Fork or Leaf
-balanceR k x y (Fork R c z d) =
-    Fork k (Fork R x y c) z d
-balanceR k l x r = Fork k l x r
+balanceR c r x (Fork R rl rx rr) = Fork c (Fork R r x rl) rx rr
+balanceR c l x r = Fork c l x r
 
 ----------------------------------------------------------------
 
@@ -108,7 +107,7 @@ deleteMin' t@(Fork R l x r)
   where
     isBB = isBlackLeftBlack l
     isBR = isBlackLeftRed r
-deleteMin' (Fork k l x r) = Fork k (deleteMin' l) x r
+deleteMin' (Fork c l x r) = Fork c (deleteMin' l) x r
 deleteMin' _ = error "deleteMin'"
 -}
 
@@ -173,7 +172,7 @@ deleteMax' _ = error "deleteMax'"
 -}
 
 rotateR :: RBTree a -> RBTree a
-rotateR (Fork k (Fork R a x b) y c) = balanceR k a x (deleteMax' (Fork R b y c))
+rotateR (Fork c (Fork R ll lx lr) x r) = balanceR c ll lx (deleteMax' (Fork R lr x r))
 rotateR _ = error "rorateR"
 
 {-
@@ -195,43 +194,43 @@ delete kx t = case delete' kx (turnR t) of
 
 delete' :: Ord a => a -> RBTree a -> RBTree a
 delete' _ Leaf = Leaf
-delete' kx (Fork k l x r) = case compare kx x of
-    LT -> deleteLT kx k l x r
-    GT -> deleteGT kx k l x r
-    EQ -> deleteEQ kx k l x r
+delete' kx (Fork c l x r) = case compare kx x of
+    LT -> deleteLT kx c l x r
+    GT -> deleteGT kx c l x r
+    EQ -> deleteEQ kx c l x r
 
 deleteLT :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
 deleteLT kx R l x r
-  | isBB && isBR = Fork R (Fork B (delete' kx (turnR l)) x b) y (Fork B c z d)
+  | isBB && isBR = Fork R (Fork B (delete' kx (turnR l)) x rll) rlx (Fork B rlr rx rr)
   | isBB         = balanceR B (delete' kx (turnR l)) x (turnR r)
   where
     isBB = isBlackLeftBlack l
     isBR = isBlackLeftRed r
-    Fork B (Fork R b y c) z d = r
-deleteLT kx k l x r = Fork k (delete' kx l) x r
+    Fork B (Fork R rll rlx rlr) rx rr = r
+deleteLT kx c l x r = Fork c (delete' kx l) x r
 
 deleteGT :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
-deleteGT kx k (Fork R a x b) y c = balanceR k a x (delete' kx (Fork R b y c))
+deleteGT kx c (Fork R ll lx lr) x r = balanceR c ll lx (delete' kx (Fork R lr x r))
 deleteGT kx R l x r
-  | isBB && isBR = Fork R (turnB la) lx (balanceR B lb x (delete' kx (turnR r)))
+  | isBB && isBR = Fork R (turnB ll) lx (balanceR B lr x (delete' kx (turnR r)))
   | isBB         = balanceR B (turnR l) x (delete' kx (turnR r))
   where
     isBB = isBlackLeftBlack r
     isBR = isBlackLeftRed l
-    Fork B la@(Fork R _ _ _) lx lb = l
+    Fork B ll@(Fork R _ _ _) lx lr = l
 deleteGT kx R l x r = Fork R l x (delete' kx r)
 deleteGT _ _ _ _ _ = error "deleteGT"
 
 deleteEQ :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
 deleteEQ _ R Leaf _ Leaf = Leaf
-deleteEQ kx k (Fork R a x b) y c = balanceR k a x (delete' kx (Fork R b y c))
+deleteEQ kx c (Fork R ll lx lr) x r = balanceR c ll lx (delete' kx (Fork R lr x r))
 deleteEQ _ R l _ r
-  | isBB && isBR = balanceR R (turnB la) lx (balanceR B lb m (deleteMin' (turnR r)))
+  | isBB && isBR = balanceR R (turnB ll) lx (balanceR B lr m (deleteMin' (turnR r)))
   | isBB         = balanceR B (turnR l) m (deleteMin' (turnR r))
   where
     isBB = isBlackLeftBlack r
     isBR = isBlackLeftRed l
-    Fork B la@(Fork R _ _ _) lx lb = l
+    Fork B ll@(Fork R _ _ _) lx lr = l
     m = minimum r
 deleteEQ _ R l _ r@(Fork B rl rx rr) = Fork R l m (Fork B (deleteMin' rl) rx rr) -- rl is Red
   where

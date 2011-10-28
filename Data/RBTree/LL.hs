@@ -64,8 +64,15 @@ deleteMin t = case deleteMin' (turnR t) of
     Leaf -> Leaf
     t'   -> turnB t'
 
+{-
+  This deleteMin' keeps an invariant: the target node is always red.
+
+  If the left child of the minimum node is Leaf, the right child
+  MUST be Leaf thanks to the invariants of LLRB.
+-}
+
 deleteMin' :: RBTree a -> RBTree a
-deleteMin' (Fork R Leaf _ Leaf) = Leaf
+deleteMin' (Fork R Leaf _ Leaf) = Leaf -- deleting the minimum
 deleteMin' t@(Fork R l x r)
   -- Red
   | isRed l      = Fork R (deleteMin' l) x r
@@ -80,6 +87,11 @@ deleteMin' t@(Fork R l x r)
     Fork B la lx lb = l
 deleteMin' _ = error "deleteMin'"
 
+{-
+  The hardest case. See slide 61 of:
+	http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf
+-}
+
 hardMin :: RBTree a -> RBTree a
 hardMin (Fork R l x (Fork B (Fork R b y c) z d))
     = Fork R (Fork B (deleteMin' (turnR l)) x b) y (Fork B c z d)
@@ -92,8 +104,18 @@ deleteMax t = case deleteMax' (turnR t) of
     Leaf -> Leaf
     t'   -> turnB t'
 
+{-
+  This deleteMax' keeps an invariant: the target node is always red.
+
+  If the right child of the minimum node is Leaf, the left child
+  is:
+
+  1) A Leaf -- we can delete it
+  2) A red node -- we can rotateR it and have 1).
+-}
+
 deleteMax' :: RBTree a -> RBTree a
-deleteMax' (Fork R Leaf _ Leaf) = Leaf
+deleteMax' (Fork R Leaf _ Leaf) = Leaf -- deleting the maximum
 deleteMax' t@(Fork R l x r)
   | isRed l      = rotateR t
   -- Black-Black
@@ -106,6 +128,10 @@ deleteMax' t@(Fork R l x r)
     isBR = isBlackLeftRed l
     Fork B la@(Fork R _ _ _) lx lb = l
 deleteMax' _ = error "deleteMax'"
+
+{-
+  rotateR ensures that the maximum node is in the form of (Fork R Leaf _ Leaf).
+-}
 
 rotateR :: RBTree a -> RBTree a
 rotateR (Fork k (Fork R a x b) y c) = balanceR k a x (deleteMax' (Fork R b y c))

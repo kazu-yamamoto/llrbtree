@@ -36,6 +36,9 @@ Data.RBTree.LL --- Left-leaning red-black trees
 	Analysis of Algorithms meeting at Maresias (Apr 2008)
 	http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf
 
+	http://algs4.cs.princeton.edu/32bst/
+	http://algs4.cs.princeton.edu/33balanced/RedBlackBST.java.html
+
 ----------------------------------------------------------------
 * Lines of imperative code:
 

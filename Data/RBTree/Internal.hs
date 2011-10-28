@@ -82,3 +82,16 @@ isRed _               = False
 left :: RBTree a -> RBTree a
 left (Fork _ l _ _ ) = l
 left _               = error "left"
+
+----------------------------------------------------------------
+
+showTree :: Show a => RBTree a -> String
+showTree = showTree' ""
+
+showTree' :: Show a => String -> RBTree a -> String
+showTree' _ Leaf = "\n"
+showTree' pref (Fork k l x r) = show k ++ " " ++ show x ++ "\n"
+                               ++ pref ++ "+ " ++ showTree' pref' l
+                               ++ pref ++ "+ " ++ showTree' pref' r
+  where
+    pref' = "  " ++ pref

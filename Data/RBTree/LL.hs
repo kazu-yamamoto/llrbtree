@@ -6,7 +6,7 @@ module Data.RBTree.LL (
   , fromList
   , toList
   , member
---  , delete
+  , delete
   , deleteMin
   , deleteMax
   , valid
@@ -178,7 +178,6 @@ hardMax _              = error "hardMax"
 
 ----------------------------------------------------------------
 
-{-
 delete :: Ord a => a -> RBTree a -> RBTree a
 delete kx t = case delete' kx (turnR t) of
     Leaf -> Leaf
@@ -196,39 +195,39 @@ deleteLT kx R l x r
   | isBB && isBR = Fork R (Fork B (delete' kx (turnR l)) x b) y (Fork B c z d)
   | isBB         = balanceR B (delete' kx (turnR l)) x (turnR r)
   where
-    isBB = isBlackLeftBlack l
-    isBR = isBlackLeftRed r
+    isBB = isBlack l && isBlack (left l)
+    isBR = isRed (left r)
     Fork B (Fork R b y c) z d = r
 deleteLT kx k l x r = Fork k (delete' kx l) x r
 
 deleteGT :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
 deleteGT kx k (Fork R a x b) y c = balanceR k a x (delete' kx (Fork R b y c))
-deleteGT kx R l y r
-  | isBB && isBR = Fork R (turnB a) x (balanceR B b y (delete' kx (turnR r)))
-  | isBB         = balanceR B (turnR l) y (delete' kx (turnR r))
+deleteGT kx R l x r
+  | isBB && isBR = Fork R (turnB la) lx (balanceR B lb x (delete' kx (turnR r)))
+  | isBB         = balanceR B (turnR l) x (delete' kx (turnR r))
   where
-    isBB = isBlackLeftBlack r
-    isBR = isBlackLeftRed l
-    Fork B a@(Fork R _ _ _) x b = l
+    isBB = isBlack (left r)
+    isBR = isRed (left l) -- && isBlack l
+    Fork B la@(Fork R _ _ _) lx lb = l
 deleteGT kx k l x r = Fork k l x (delete' kx r)
 
 deleteEQ :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
-deleteEQ _ _ Leaf _ Leaf = Leaf
+deleteEQ _ R Leaf _ Leaf = Leaf
 deleteEQ kx k (Fork R a x b) y c = balanceR k a x (delete' kx (Fork R b y c))
-deleteEQ kx R l y r
-  | isBB && isBR = balanceR R (turnB a) x (delete' kx (Fork B b y (turnR r)))
-  | isBB         = balanceR B (turnR l) m (deleteMin r) -- xxx (turnR r)
+deleteEQ _ R l _ r
+  | isBB && isBR = balanceR R (turnB la) lx (balanceR B lb m (deleteMin' (turnR r)))
+  | isBB         = balanceR B (turnR l) m (deleteMin' (turnR r))
   where
-    isBB = isBlackLeftBlack r
-    isBR = isBlackLeftRed l
-    Fork B a@(Fork R _ _ _) x b = l
+    isBB = isBlack (left r)
+    isBR = isRed (left l) -- && isBlack l
+    Fork B la@(Fork R _ _ _) lx lb = l
     m = minimum r
-deleteEQ _ k l _ r = Fork k l m (deleteMin r)
+deleteEQ _ k l _ r@(Fork B rl@(Fork R _ _ _) rx rr) = Fork k l m (Fork B (deleteMin' rl) rx rr)
   where
     m = minimum r
+deleteEQ _ _ _ _ _ = error "deleteEQ"
 
 minimum :: RBTree a -> a
 minimum (Fork _ Leaf x _) = x
 minimum (Fork _ l _ _) = minimum l
 minimum _ = error "minimum"
--}

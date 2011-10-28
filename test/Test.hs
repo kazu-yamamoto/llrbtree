@@ -8,17 +8,20 @@ import Test.Framework.Providers.QuickCheck2
 
 tests :: [Test]
 tests = [ testGroup "Property Test" [
+               {-
                testProperty "fromList"           prop_fromList
              , testProperty "toList"             prop_toList
              , testProperty "member"             prop_member
-               {-
-             , testProperty "delete"             prop_delete
+
+             , -} testProperty "delete"             prop_delete
+             , testProperty "delete'"            prop_delete'
              , testProperty "delete2"            prop_delete2
--}
+{-
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
+-}
              ]
         ]
 
@@ -38,23 +41,28 @@ prop_member (x:xs) = member x t
   where
     t = fromList (x:xs)
 
-{-
 prop_delete :: [Int] -> Bool
 prop_delete [] = True
-prop_delete (x:xs) = valid t'
+prop_delete xxs@(x:_) = valid t'
   where
-    t = fromList (x:xs)
+    t = fromList xxs
     t' = delete x t
+
+prop_delete' :: [Int] -> Bool
+prop_delete' [] = True
+prop_delete' xs = valid t'
+  where
+    t = fromList xs
+    t' = delete (last xs) t
 
 prop_delete2 :: [Int] -> Bool
 prop_delete2 [] = True
-prop_delete2 (x:xs) = ys == zs
+prop_delete2 xxs@(x:xs) = ys == zs
   where
-    t = fromList (x:xs)
+    t = fromList xxs
     t' = delete x t
     ys = toList t'
     zs = L.delete x . nub . sort $ xs
--}
 
 prop_deleteMin :: [Int] -> Bool
 prop_deleteMin [] = True

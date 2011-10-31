@@ -6,9 +6,7 @@ module Data.RBTree.LL (
   , fromList
   , toList
   , member
-    {-
   , delete
--}
   , deleteMin
   , deleteMax
   , valid
@@ -190,8 +188,6 @@ hardMax (Node R h (Node B lh ll@(Node R _ _ _ _ ) lx lr) x r)
     = Node R h (turnB ll) lx (balanceR B lh lr x (deleteMax' (turnR r)))
 hardMax _              = error "hardMax"
 
-{- XXX
-
 ----------------------------------------------------------------
 
 delete :: Ord a => a -> RBTree a -> RBTree a
@@ -201,52 +197,50 @@ delete kx t = case delete' kx (turnR t) of
 
 delete' :: Ord a => a -> RBTree a -> RBTree a
 delete' _ Leaf = Leaf
-delete' kx (Node c l x r) = case compare kx x of
-    LT -> deleteLT kx c l x r
-    GT -> deleteGT kx c l x r
-    EQ -> deleteEQ kx c l x r
+delete' kx (Node c h l x r) = case compare kx x of
+    LT -> deleteLT kx c h l x r
+    GT -> deleteGT kx c h l x r
+    EQ -> deleteEQ kx c h l x r
 
-deleteLT :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
-deleteLT kx R l x r
-  | isBB && isBR = Node R (Node B (delete' kx (turnR l)) x rll) rlx (Node B rlr rx rr)
-  | isBB         = balanceR B (delete' kx (turnR l)) x (turnR r)
+deleteLT :: Ord a => a -> Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+deleteLT kx R h l x r
+  | isBB && isBR = Node R h (Node B rh (delete' kx (turnR l)) x rll) rlx (Node B rh rlr rx rr)
+  | isBB         = balanceR B (h-1) (delete' kx (turnR l)) x (turnR r)
   where
     isBB = isBlackLeftBlack l
     isBR = isBlackLeftRed r
-    Node B (Node R rll rlx rlr) rx rr = r
-deleteLT kx c l x r = Node c (delete' kx l) x r
+    Node B rh (Node R _ rll rlx rlr) rx rr = r
+deleteLT kx c h l x r = Node c h (delete' kx l) x r
 
-deleteGT :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
-deleteGT kx c (Node R ll lx lr) x r = balanceR c ll lx (delete' kx (Node R lr x r))
-deleteGT kx R l x r
-  | isBB && isBR = Node R (turnB ll) lx (balanceR B lr x (delete' kx (turnR r)))
-  | isBB         = balanceR B (turnR l) x (delete' kx (turnR r))
+deleteGT :: Ord a => a -> Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+deleteGT kx c h (Node R _ ll lx lr) x r = balanceR c h ll lx (delete' kx (Node R h lr x r))
+deleteGT kx R h l x r
+  | isBB && isBR = Node R h (turnB ll) lx (balanceR B lh lr x (delete' kx (turnR r)))
+  | isBB         = balanceR B (h-1) (turnR l) x (delete' kx (turnR r))
   where
     isBB = isBlackLeftBlack r
     isBR = isBlackLeftRed l
-    Node B ll@(Node R _ _ _) lx lr = l
-deleteGT kx R l x r = Node R l x (delete' kx r)
-deleteGT _ _ _ _ _ = error "deleteGT"
+    Node B lh ll@(Node R _ _ _ _) lx lr = l
+deleteGT kx R h l x r = Node R h l x (delete' kx r)
+deleteGT _ _ _ _ _ _ = error "deleteGT"
 
-deleteEQ :: Ord a => a -> Color -> RBTree a -> a -> RBTree a -> RBTree a
-deleteEQ _ R Leaf _ Leaf = Leaf
-deleteEQ kx c (Node R ll lx lr) x r = balanceR c ll lx (delete' kx (Node R lr x r))
-deleteEQ _ R l _ r
-  | isBB && isBR = balanceR R (turnB ll) lx (balanceR B lr m (deleteMin' (turnR r)))
-  | isBB         = balanceR B (turnR l) m (deleteMin' (turnR r))
+deleteEQ :: Ord a => a -> Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+deleteEQ _ R _ Leaf _ Leaf = Leaf
+deleteEQ kx c h (Node R _ ll lx lr) x r = balanceR c h ll lx (delete' kx (Node R h lr x r))
+deleteEQ _ R h l _ r
+  | isBB && isBR = balanceR R h (turnB ll) lx (balanceR B lh lr m (deleteMin' (turnR r)))
+  | isBB         = balanceR B (h-1) (turnR l) m (deleteMin' (turnR r))
   where
     isBB = isBlackLeftBlack r
     isBR = isBlackLeftRed l
-    Node B ll@(Node R _ _ _) lx lr = l
+    Node B lh ll@(Node R _ _ _ _) lx lr = l
     m = minimum r
-deleteEQ _ R l _ r@(Node B rl rx rr) = Node R l m (Node B (deleteMin' rl) rx rr) -- rl is Red
+deleteEQ _ R h l _ r@(Node B rh rl rx rr) = Node R h l m (Node B rh (deleteMin' rl) rx rr) -- rl is Red
   where
     m = minimum r
-deleteEQ _ _ _ _ _ = error "deleteEQ"
+deleteEQ _ _ _ _ _ _ = error "deleteEQ"
 
 minimum :: RBTree a -> a
-minimum (Node _ Leaf x _) = x
-minimum (Node _ l _ _) = minimum l
+minimum (Node _ _ Leaf x _) = x
+minimum (Node _ _ l _ _) = minimum l
 minimum _ = error "minimum"
-
-XXX -}

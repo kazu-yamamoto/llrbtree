@@ -17,13 +17,11 @@ tests = [ testGroup "Property Test" [
                testProperty "fromList"           prop_fromList
              , testProperty "toList"             prop_toList
              , testProperty "member"             prop_member
-#if 0
              , testProperty "delete"             prop_delete
              , testProperty "deleteRoot"         prop_deleteRoot
              , testProperty "deleteLeaf"         prop_deleteLeaf
              , testProperty "deleteNon"          prop_deleteNon
              , testProperty "delete2"            prop_delete2
-#endif
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
 #if METHOD != 1
@@ -49,7 +47,6 @@ prop_member (x:xs) = member x t
   where
     t = fromList (x:xs)
 
-#if 0
 prop_deleteRoot :: [Int] -> Bool
 prop_deleteRoot [] = True
 prop_deleteRoot xxs@(x:_) = valid t'
@@ -87,7 +84,6 @@ prop_delete2 xxs@(x:xs) = ys == zs
     t' = delete x t
     ys = toList t'
     zs = L.delete x . nub . sort $ xs
-#endif
 
 prop_deleteMin :: [Int] -> Bool
 prop_deleteMin [] = True

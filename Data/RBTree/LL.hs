@@ -100,18 +100,17 @@ deleteMin' t@(Node R h l x r)
     Node B lh ll lx lr = l -- to skip Black
 deleteMin' _ = error "deleteMin'"
 
---XXX
 -- Simplified but not keeping the invariant.
 {-
 deleteMin' :: RBTree a -> RBTree a
-deleteMin' (Node R Leaf _ Leaf) = Leaf
-deleteMin' t@(Node R l x r)
+deleteMin' (Node R _ Leaf _ Leaf) = Leaf
+deleteMin' t@(Node R h l x r)
   | isBB && isBR = hardMin t
-  | isBB         = balanceR B (deleteMin' (turnR l)) x (turnR r)
+  | isBB         = balanceR B (h-1) (deleteMin' (turnR l)) x (turnR r)
   where
     isBB = isBlackLeftBlack l
     isBR = isBlackLeftRed r
-deleteMin' (Node c l x r) = Node c (deleteMin' l) x r
+deleteMin' (Node c h l x r) = Node c h (deleteMin' l) x r
 deleteMin' _ = error "deleteMin'"
 -}
 
@@ -158,19 +157,18 @@ deleteMax' t@(Node R h l x r)
     isBR = isBlackLeftRed l
 deleteMax' _ = error "deleteMax'"
 
--- XXX
 -- Simplified but not keeping the invariant.
 {-
 deleteMax' :: RBTree a -> RBTree a
-deleteMax' (Node R Leaf _ Leaf) = Leaf
-deleteMax' t@(Node _ (Node R _ _ _) _ _) = rotateR t
-deleteMax' t@(Node R l x r)
+deleteMax' (Node R _ Leaf _ Leaf) = Leaf
+deleteMax' t@(Node _ _ (Node R _ _ _ _) _ _) = rotateR t
+deleteMax' t@(Node R h l x r)
   | isBB && isBR = hardMax t
-  | isBB         = balanceR B (turnR l) x (deleteMax' (turnR r))
+  | isBB         = balanceR B (h-1) (turnR l) x (deleteMax' (turnR r))
   where
     isBB = isBlackLeftBlack r
     isBR = isBlackLeftRed l
-deleteMax' (Node R l x r) = Node R l x (deleteMax' r)
+deleteMax' (Node R h l x r) = Node R h l x (deleteMax' r)
 deleteMax' _ = error "deleteMax'"
 -}
 

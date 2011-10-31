@@ -6,8 +6,10 @@ module Data.RBTree (
   , fromList
   , toList
   , member
+{-
   , delete
   , deleteMin
+-}
   , valid
   ) where
 
@@ -17,7 +19,7 @@ import Data.RBTree.Internal
 ----------------------------------------------------------------
 
 valid :: RBTree a -> Bool
-valid = isBalanced
+valid t = isBalanced t && blackHeight t
 
 ----------------------------------------------------------------
 
@@ -29,28 +31,30 @@ fromList = foldl' (flip insert) empty
 --
 
 insert :: Ord a => a -> RBTree a -> RBTree a
-insert kx t = turnB (ins t)
-  where
-    ins Leaf = Node R Leaf kx Leaf
-    ins s@(Node k l x r) = case compare kx x of
-        LT -> balanceL k (ins l) x r
-        GT -> balanceR k l x (ins r)
-        EQ -> s
+insert kx t = turnB (insert' kx t)
 
-balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balanceL B (Node R (Node R a x b) y c) z d =
-    Node R (Node B a x b) y (Node B c z d)
-balanceL B (Node R a x (Node R b y c)) z d =
-    Node R (Node B a x b) y (Node B c z d)
-balanceL k l x r = Node k l x r
+insert' :: Ord a => a -> RBTree a -> RBTree a
+insert' kx Leaf = Node R 1 Leaf kx Leaf
+insert' kx s@(Node c h l x r) = case compare kx x of
+    LT -> balanceL c h (insert' kx l) x r
+    GT -> balanceR c h l x (insert' kx r)
+    EQ -> s
 
-balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balanceR B a x (Node R b y (Node R c z d)) =
-    Node R (Node B a x b) y (Node B c z d)
-balanceR B a x (Node R (Node R b y c) z d) =
-    Node R (Node B a x b) y (Node B c z d)
-balanceR k l x r = Node k l x r
+balanceL :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+balanceL B h (Node R _ (Node R _ a x b) y c) z d =
+    Node R (h+1) (Node B h a x b) y (Node B h c z d)
+balanceL B h (Node R _ a x (Node R _ b y c)) z d =
+    Node R (h+1) (Node B h a x b) y (Node B h c z d)
+balanceL k h l x r = Node k h l x r
 
+balanceR :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+balanceR B h a x (Node R _ b y (Node R _ c z d)) =
+    Node R (h+1) (Node B h a x b) y (Node B h c z d)
+balanceR B h a x (Node R _ (Node R _ b y c) z d) =
+    Node R (h+1) (Node B h a x b) y (Node B h c z d)
+balanceR k h l x r = Node k h l x r
+
+{-XXX
 ----------------------------------------------------------------
 
 type RBTreeBDel a = (RBTree a, Bool)
@@ -64,7 +68,7 @@ unbalancedL _ _ _ _ = error "unbalancedL"
 unbalancedR :: Color -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
 -- Decreasing one Black node in the right
 unbalancedR c t1 x1 (Node B t2 x2 t3) = (balanceR B t1 x1 (Node R t2 x2 t3), c == B)
--- Takeing one Red node from the right and adding it to the right as Black
+-- Taking one Red node from the right and adding it to the right as Black
 unbalancedR B t1 x1 (Node R (Node B t2 x2 t3) x3 t4) = (Node B (balanceR B t1 x1 (Node R t2 x2 t3)) x3 t4, False)
 unbalancedR _ _ _ _ = error "unbalancedR"
 
@@ -96,7 +100,7 @@ delete :: Ord a => a -> RBTree a -> RBTree a
 delete x t = s
   where
     (s,_) = delete' x t
-    
+
 delete' :: Ord a => a -> RBTree a -> RBTreeBDel a
 delete' _ Leaf = (Leaf, False)
 delete' x (Node c l y r) = case compare x y of
@@ -111,3 +115,4 @@ delete' x (Node c l y r) = case compare x y of
         _ -> let ((r',d),m) = deleteMin' r
                  t = Node c l m r'
              in if d then unbalancedL c l m r' else (t, False)
+-}

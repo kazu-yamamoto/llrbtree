@@ -1,8 +1,14 @@
+{-# LANGUAGE CPP #-}
+
 module Main where
 
 import qualified Data.List as L (delete)
 import Data.List hiding (delete)
+#if METHOD == 1
+import Data.RBTree
+#else
 import Data.RBTree.LL
+#endif
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.QuickCheck2
 
@@ -18,8 +24,10 @@ tests = [ testGroup "Property Test" [
              , testProperty "delete2"            prop_delete2
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
+#if METHOD != 1
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
+#endif
              ]
         ]
 
@@ -93,6 +101,7 @@ prop_deleteMin2 xs = ys == zs
     ys = toList t'
     zs = tail . nub . sort $ xs
 
+#if METHOD != 1
 prop_deleteMax :: [Int] -> Bool
 prop_deleteMax [] = True
 prop_deleteMax xs = valid t'
@@ -108,6 +117,7 @@ prop_deleteMax2 xs = ys == zs
     t' = deleteMax t
     ys = reverse . toList $ t'
     zs = tail . nub . sortBy (flip compare) $ xs
+#endif
 
 main :: IO ()
 main = defaultMain tests

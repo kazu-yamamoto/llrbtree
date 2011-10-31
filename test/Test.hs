@@ -17,16 +17,20 @@ tests = [ testGroup "Property Test" [
                testProperty "fromList"           prop_fromList
              , testProperty "toList"             prop_toList
              , testProperty "member"             prop_member
+#if 0
              , testProperty "delete"             prop_delete
              , testProperty "deleteRoot"         prop_deleteRoot
              , testProperty "deleteLeaf"         prop_deleteLeaf
              , testProperty "deleteNon"          prop_deleteNon
              , testProperty "delete2"            prop_delete2
+#endif
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
+#if 0
 #if METHOD != 1
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
+#endif
 #endif
              ]
         ]
@@ -47,6 +51,7 @@ prop_member (x:xs) = member x t
   where
     t = fromList (x:xs)
 
+#if 0
 prop_deleteRoot :: [Int] -> Bool
 prop_deleteRoot [] = True
 prop_deleteRoot xxs@(x:_) = valid t'
@@ -84,6 +89,7 @@ prop_delete2 xxs@(x:xs) = ys == zs
     t' = delete x t
     ys = toList t'
     zs = L.delete x . nub . sort $ xs
+#endif
 
 prop_deleteMin :: [Int] -> Bool
 prop_deleteMin [] = True
@@ -101,6 +107,7 @@ prop_deleteMin2 xs = ys == zs
     ys = toList t'
     zs = tail . nub . sort $ xs
 
+#if 0
 #if METHOD != 1
 prop_deleteMax :: [Int] -> Bool
 prop_deleteMax [] = True
@@ -117,6 +124,7 @@ prop_deleteMax2 xs = ys == zs
     t' = deleteMax t
     ys = reverse . toList $ t'
     zs = tail . nub . sortBy (flip compare) $ xs
+#endif
 #endif
 
 main :: IO ()

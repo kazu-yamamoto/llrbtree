@@ -6,9 +6,13 @@ module Data.RBTree.LL (
   , fromList
   , toList
   , member
+    {-
   , delete
+-}
   , deleteMin
+    {-
   , deleteMax
+-}
   , valid
   ) where
 
@@ -19,12 +23,12 @@ import Prelude hiding (minimum)
 ----------------------------------------------------------------
 
 valid :: RBTree a -> Bool
-valid t = isBalanced t && isLeftLean t
+valid t = isBalanced t && isLeftLean t && blackHeight t
 
 isLeftLean :: RBTree a -> Bool
 isLeftLean Leaf = True
-isLeftLean (Node B _ _ (Node R _ _ _)) = False -- right only and both!
-isLeftLean (Node _ r _ l) = isLeftLean r && isLeftLean l
+isLeftLean (Node B _ _ _ (Node R _ _ _ _)) = False -- right only and both!
+isLeftLean (Node _ _ r _ l) = isLeftLean r && isLeftLean l
 
 ----------------------------------------------------------------
 
@@ -34,38 +38,39 @@ fromList = foldl' (flip insert) empty
 ----------------------------------------------------------------
 
 insert :: Ord a => a -> RBTree a -> RBTree a
-insert x t = turnB (insert' x t)
+insert kx t = turnB (insert' kx t)
 
 insert' :: Ord a => a -> RBTree a -> RBTree a
-insert' kx Leaf = Node R Leaf kx Leaf
-insert' kx t@(Node c l x r) = case compare kx x of
-    LT -> balanceL c (insert' kx l) x r
-    GT -> balanceR c l x (insert' kx r)
+insert' kx Leaf = Node R 1 Leaf kx Leaf
+insert' kx t@(Node c h l x r) = case compare kx x of
+    LT -> balanceL c h (insert' kx l) x r
+    GT -> balanceR c h l x (insert' kx r)
     EQ -> t
 
-balanceL :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balanceL B (Node R ll@(Node R _ _ _) lx lr) x r =
-    Node R (turnB ll) lx (Node B lr x r)
-balanceL c l x r = Node c l x r
+balanceL :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+balanceL B h (Node R _ ll@(Node R _ _ _ _) lx lr) x r =
+    Node R (h+1) (turnB ll) lx (Node B h lr x r)
+balanceL c h l x r = Node c h l x r
 
-balanceR :: Color -> RBTree a -> a -> RBTree a -> RBTree a
-balanceR B l@(Node R _ _ _) x r@(Node R _ _ _) = Node R (turnB l) x (turnB r)
+balanceR :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+balanceR B h l@(Node R _ _ _ _) x r@(Node R _ _ _ _) =
+    Node R (h+1) (turnB l) x (turnB r)
 -- x is Black since Red eliminated by the case above
 -- x is either Node or Leaf
-balanceR c r x (Node R rl rx rr) = Node c (Node R r x rl) rx rr
-balanceR c l x r = Node c l x r
+balanceR c h l x (Node R rh rl rx rr) = Node c h (Node R rh l x rl) rx rr
+balanceR c h l x r = Node c h l x r
 
 ----------------------------------------------------------------
 
 isBlackLeftBlack :: RBTree a -> Bool
-isBlackLeftBlack (Node B Leaf _ _)           = True
-isBlackLeftBlack (Node B (Node B _ _ _) _ _) = True
-isBlackLeftBlack _                           = False
+isBlackLeftBlack (Node B _ Leaf _ _)             = True
+isBlackLeftBlack (Node B _ (Node B _ _ _ _) _ _) = True
+isBlackLeftBlack _                               = False
 
 
 isBlackLeftRed :: RBTree a -> Bool
-isBlackLeftRed (Node B (Node R _ _ _) _ _) = True
-isBlackLeftRed _                           = False
+isBlackLeftRed (Node B _ (Node R _ _ _ _) _ _) = True
+isBlackLeftRed _                               = False
 
 ----------------------------------------------------------------
 
@@ -82,21 +87,22 @@ deleteMin t = case deleteMin' (turnR t) of
 -}
 
 deleteMin' :: RBTree a -> RBTree a
-deleteMin' (Node R Leaf _ Leaf) = Leaf -- deleting the minimum
-deleteMin' t@(Node R l x r)
+deleteMin' (Node R _ Leaf _ Leaf) = Leaf -- deleting the minimum
+deleteMin' t@(Node R h l x r)
   -- Red
-  | isRed l      = Node R (deleteMin' l) x r
+  | isRed l      = Node R h (deleteMin' l) x r
   -- Black-Black
   | isBB && isBR = hardMin t
-  | isBB         = balanceR B (deleteMin' (turnR l)) x (turnR r)
+  | isBB         = balanceR B (h-1) (deleteMin' (turnR l)) x (turnR r)
   -- Black-Red
-  | otherwise    = Node R (Node B (deleteMin' ll) lx lr) x r -- ll is Red
+  | otherwise    = Node R h (Node B lh (deleteMin' ll) lx lr) x r -- ll is Red
   where
     isBB = isBlackLeftBlack l
     isBR = isBlackLeftRed r
-    Node B ll lx lr = l -- to skip Black
+    Node B lh ll lx lr = l -- to skip Black
 deleteMin' _ = error "deleteMin'"
 
+--XXX
 -- Simplified but not keeping the invariant.
 {-
 deleteMin' :: RBTree a -> RBTree a
@@ -117,9 +123,17 @@ deleteMin' _ = error "deleteMin'"
 -}
 
 hardMin :: RBTree a -> RBTree a
-hardMin (Node R l x (Node B (Node R b y c) z d))
-    = Node R (Node B (deleteMin' (turnR l)) x b) y (Node B c z d)
+{-
+hardMin (Node R h l x (Node B i (Node R j b y c) z d))
+    = Node R h (Node B i (deleteMin' (turnR l)) x b) y (Node B c z d)
+-}
+hardMin (Node R h l x (Node B rh (Node R _ rll rlx rlr) rx rr))
+    = Node R h (Node B rh (deleteMin' (turnR l)) x rll)
+               rlx
+               (Node B rh rlr rx rr)
 hardMin _ = error "hardMin"
+
+{- XXX
 
 ----------------------------------------------------------------
 
@@ -241,3 +255,5 @@ minimum :: RBTree a -> a
 minimum (Node _ Leaf x _) = x
 minimum (Node _ l _ _) = minimum l
 minimum _ = error "minimum"
+
+XXX -}

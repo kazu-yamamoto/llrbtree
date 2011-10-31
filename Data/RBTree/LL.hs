@@ -90,11 +90,11 @@ deleteMin' t@(Node R l x r)
   | isBB && isBR = hardMin t
   | isBB         = balanceR B (deleteMin' (turnR l)) x (turnR r)
   -- Black-Red
-  | otherwise    = Node R (Node B (deleteMin' la) lx lb) x r -- la is Red
+  | otherwise    = Node R (Node B (deleteMin' ll) lx lr) x r -- ll is Red
   where
     isBB = isBlackLeftBlack l
     isBR = isBlackLeftRed r
-    Node B la lx lb = l -- to skip Black
+    Node B ll lx lr = l -- to skip Black
 deleteMin' _ = error "deleteMin'"
 
 -- Simplified but not keeping the invariant.
@@ -181,8 +181,8 @@ rotateR _ = error "rorateR"
 -}
 
 hardMax :: RBTree a -> RBTree a
-hardMax (Node R (Node B la@(Node R _ _ _) lx lb) x r)
-    = Node R (turnB la) lx (balanceR B lb x (deleteMax' (turnR r)))
+hardMax (Node R (Node B ll@(Node R _ _ _) lx lr) x r)
+    = Node R (turnB ll) lx (balanceR B lr x (deleteMax' (turnR r)))
 hardMax _              = error "hardMax"
 
 ----------------------------------------------------------------

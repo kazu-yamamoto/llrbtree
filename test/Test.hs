@@ -26,11 +26,9 @@ tests = [ testGroup "Property Test" [
 #endif
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
-#if 0
 #if METHOD != 1
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
-#endif
 #endif
              ]
         ]
@@ -107,7 +105,6 @@ prop_deleteMin2 xs = ys == zs
     ys = toList t'
     zs = tail . nub . sort $ xs
 
-#if 0
 #if METHOD != 1
 prop_deleteMax :: [Int] -> Bool
 prop_deleteMax [] = True
@@ -124,7 +121,6 @@ prop_deleteMax2 xs = ys == zs
     t' = deleteMax t
     ys = reverse . toList $ t'
     zs = tail . nub . sortBy (flip compare) $ xs
-#endif
 #endif
 
 main :: IO ()

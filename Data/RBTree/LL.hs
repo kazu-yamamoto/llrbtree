@@ -10,9 +10,7 @@ module Data.RBTree.LL (
   , delete
 -}
   , deleteMin
-    {-
   , deleteMax
--}
   , valid
   ) where
 
@@ -123,17 +121,11 @@ deleteMin' _ = error "deleteMin'"
 -}
 
 hardMin :: RBTree a -> RBTree a
-{-
-hardMin (Node R h l x (Node B i (Node R j b y c) z d))
-    = Node R h (Node B i (deleteMin' (turnR l)) x b) y (Node B c z d)
--}
 hardMin (Node R h l x (Node B rh (Node R _ rll rlx rlr) rx rr))
     = Node R h (Node B rh (deleteMin' (turnR l)) x rll)
                rlx
                (Node B rh rlr rx rr)
 hardMin _ = error "hardMin"
-
-{- XXX
 
 ----------------------------------------------------------------
 
@@ -153,19 +145,20 @@ deleteMax t = case deleteMax' (turnR t) of
 -}
 
 deleteMax' :: RBTree a -> RBTree a
-deleteMax' (Node R Leaf _ Leaf) = Leaf -- deleting the maximum
-deleteMax' t@(Node R l x r)
+deleteMax' (Node R _ Leaf _ Leaf) = Leaf -- deleting the maximum
+deleteMax' t@(Node R h l x r)
   | isRed l      = rotateR t
   -- Black-Black
   | isBB && isBR = hardMax t
-  | isBB         = balanceR B (turnR l) x (deleteMax' (turnR r))
+  | isBB         = balanceR B (h-1) (turnR l) x (deleteMax' (turnR r))
   -- Black-Red
-  | otherwise    = Node R l x (rotateR r)
+  | otherwise    = Node R h l x (rotateR r)
   where
     isBB = isBlackLeftBlack r
     isBR = isBlackLeftRed l
 deleteMax' _ = error "deleteMax'"
 
+-- XXX
 -- Simplified but not keeping the invariant.
 {-
 deleteMax' :: RBTree a -> RBTree a
@@ -186,7 +179,7 @@ deleteMax' _ = error "deleteMax'"
 -}
 
 rotateR :: RBTree a -> RBTree a
-rotateR (Node c (Node R ll lx lr) x r) = balanceR c ll lx (deleteMax' (Node R lr x r))
+rotateR (Node c h (Node R _ ll lx lr) x r) = balanceR c h ll lx (deleteMax' (Node R h lr x r))
 rotateR _ = error "rorateR"
 
 {-
@@ -195,9 +188,11 @@ rotateR _ = error "rorateR"
 -}
 
 hardMax :: RBTree a -> RBTree a
-hardMax (Node R (Node B ll@(Node R _ _ _) lx lr) x r)
-    = Node R (turnB ll) lx (balanceR B lr x (deleteMax' (turnR r)))
+hardMax (Node R h (Node B lh ll@(Node R _ _ _ _ ) lx lr) x r)
+    = Node R h (turnB ll) lx (balanceR B lh lr x (deleteMax' (turnR r)))
 hardMax _              = error "hardMax"
+
+{- XXX
 
 ----------------------------------------------------------------
 

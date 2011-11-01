@@ -10,7 +10,6 @@ import Data.RBTree.LL
 #endif
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.QuickCheck2
--- import Test.QuickCheck
 
 tests :: [Test]
 tests = [ testGroup "Property Test" [
@@ -31,6 +30,10 @@ tests = [ testGroup "Property Test" [
              , testProperty "merge"              prop_merge
              , testProperty "union"              prop_union
              , testProperty "unionModel"         prop_unionModel
+             , testProperty "intersection"       prop_intersection
+             , testProperty "intersectionModel"  prop_intersectionModel
+             , testProperty "difference"         prop_difference
+             , testProperty "differenceModel"    prop_differenceModel
 #endif
              ]
         ]
@@ -144,6 +147,24 @@ prop_unionModel xs ys = zs == zs'
   where
     zs = L.nub $ L.sort $ L.union xs ys
     zs' = toList $ union (fromList xs) (fromList ys)
+
+prop_intersection :: [Int] -> [Int] -> Bool
+prop_intersection xs ys = valid $ intersection (fromList xs) (fromList ys)
+
+prop_intersectionModel :: [Int] -> [Int] -> Bool
+prop_intersectionModel xs ys = zs == zs'
+  where
+    zs = L.nub $ L.sort $ L.intersect xs ys
+    zs' = toList $ intersection (fromList xs) (fromList ys)
+
+prop_difference :: [Int] -> [Int] -> Bool
+prop_difference xs ys = valid $ difference (fromList xs) (fromList ys)
+
+prop_differenceModel :: [Int] -> [Int] -> Bool
+prop_differenceModel xs ys = zs == zs'
+  where
+    zs = L.sort $ L.nub xs L.\\ ys
+    zs' = toList $ difference (fromList xs) (fromList ys)
 #endif
 
 main :: IO ()

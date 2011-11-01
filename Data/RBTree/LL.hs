@@ -15,6 +15,8 @@ module Data.RBTree.LL (
   , merge
   , split
   , union
+  , intersection
+  , difference
   , valid
   , height
   , showTree
@@ -352,5 +354,21 @@ union :: Ord a => RBTree a -> RBTree a -> RBTree a
 union t1 Leaf = t1
 union Leaf t2 = t2
 union t1 (Node _ _ l x r) = join (union l' (turnB' l)) x (union r' r)
+  where
+    (l',r') = split x t1
+
+intersection :: Ord a => RBTree a -> RBTree a -> RBTree a
+intersection Leaf _ = Leaf
+intersection _ Leaf = Leaf
+intersection t1 (Node _ _ l x r)
+  | member x t1 = join (intersection l' l) x (intersection r' r)
+  | otherwise   = merge (intersection l' l) (intersection r' r)
+  where
+    (l',r') = split x t1
+
+difference :: Ord a => RBTree a -> RBTree a -> RBTree a
+difference Leaf _  = Leaf
+difference t1 Leaf = t1
+difference t1 (Node _ _ l x r) = merge (difference l' l) (difference r' r)
   where
     (l',r') = split x t1

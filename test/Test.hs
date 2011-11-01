@@ -27,6 +27,7 @@ tests = [ testGroup "Property Test" [
 #if METHOD != 1
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
+             , testProperty "join"               prop_join
 #endif
              ]
         ]
@@ -117,6 +118,13 @@ prop_deleteMax2 xs = ys == zs
     t' = deleteMax t
     ys = reverse . toList $ t'
     zs = tail . nub . sortBy (flip compare) $ xs
+
+prop_join :: [Int] -> Bool
+prop_join [] = True
+prop_join (x:xs) = valid $ join (fromList ys) x (fromList zs)
+  where
+    ys = filter (<x) xs
+    zs = filter (>x) xs
 #endif
 
 main :: IO ()

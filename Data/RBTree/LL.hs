@@ -9,12 +9,16 @@ module Data.RBTree.LL (
   , delete
   , deleteMin
   , deleteMax
+  , minimum
+  , maximum
+  , join
   , valid
+  , showTree
   ) where
 
 import Data.List (foldl')
 import Data.RBTree.Internal
-import Prelude hiding (minimum)
+import Prelude hiding (minimum, maximum)
 
 ----------------------------------------------------------------
 
@@ -240,7 +244,39 @@ deleteEQ _ R h l _ r@(Node B rh rl rx rr) = Node R h l m (Node B rh (deleteMin' 
     m = minimum r
 deleteEQ _ _ _ _ _ _ = error "deleteEQ"
 
+----------------------------------------------------------------
+
 minimum :: RBTree a -> a
 minimum (Node _ _ Leaf x _) = x
-minimum (Node _ _ l _ _) = minimum l
-minimum _ = error "minimum"
+minimum (Node _ _ l _ _)    = minimum l
+minimum _                   = error "minimum"
+
+maximum :: RBTree a -> a
+maximum (Node _ _ _ x Leaf) = x
+maximum (Node _ _ _ _ r)    = maximum r
+maximum _                   = error "maximum"
+
+----------------------------------------------------------------
+
+join :: Ord a => RBTree a -> a -> RBTree a -> RBTree a
+join Leaf g t2 = insert g t2
+join t1 g Leaf = insert g t1
+join t1 g t2 = case compare h1 h2 of
+    LT -> turnB $ joinLT t1 g t2 h1
+    GT -> turnB $ joinGT t1 g t2 h2
+    EQ -> Node B (h1+1) t1 g t2
+  where
+    h1 = height t1
+    h2 = height t2
+
+joinLT :: Ord a => RBTree a -> a -> RBTree a -> BlackHeight -> RBTree a
+joinLT t1 g t2@(Node c h l x r) h1
+  | h == h1   = Node R (h+1) t1 g t2
+  | otherwise = balanceL c h (joinLT t1 g l h1) x r
+joinLT _ _ _ _ = error "joinLT"
+
+joinGT :: Ord a => RBTree a -> a -> RBTree a -> BlackHeight -> RBTree a
+joinGT t1@(Node c h l x r) g t2 h2
+  | h == h2   = Node R (h+1) t1 g t2
+  | otherwise = balanceR c h l x (joinGT r g t2 h2)
+joinGT _ _ _ _ = error "joinGT"

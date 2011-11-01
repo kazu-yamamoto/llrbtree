@@ -11,6 +11,12 @@ type BlackHeight = Int
 
 ----------------------------------------------------------------
 
+height :: RBTree a -> BlackHeight
+height Leaf = 0
+height (Node _ h _ _ _) = h
+
+----------------------------------------------------------------
+
 empty :: RBTree a
 empty = Leaf
 

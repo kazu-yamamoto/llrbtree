@@ -88,6 +88,10 @@ turnB :: RBTree a -> RBTree a
 turnB Leaf           = error "turnB"
 turnB (Node _ h l x r) = Node B h l x r
 
+turnB' :: RBTree a -> RBTree a
+turnB' Leaf             = Leaf
+turnB' (Node _ h l x r) = Node B h l x r
+
 ----------------------------------------------------------------
 
 isBlack :: RBTree a -> Bool
@@ -98,6 +102,7 @@ isBlack _               = False
 isRed :: RBTree a -> Bool
 isRed (Node R _ _ _ _ ) = True
 isRed _               = False
+
 
 ----------------------------------------------------------------
 

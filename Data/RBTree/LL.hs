@@ -12,7 +12,11 @@ module Data.RBTree.LL (
   , minimum
   , maximum
   , join
+--  , glue
+  , split
+  , union
   , valid
+  , height
   , showTree
   ) where
 
@@ -258,6 +262,11 @@ maximum _                   = error "maximum"
 
 ----------------------------------------------------------------
 
+{-
+  Each element of t1 < g.
+  Each element of t2 > g.
+-}
+
 join :: Ord a => RBTree a -> a -> RBTree a -> RBTree a
 join Leaf g t2 = insert g t2
 join t1 g Leaf = insert g t1
@@ -280,3 +289,39 @@ joinGT t1@(Node c h l x r) g t2 h2
   | h == h2   = Node R (h+1) t1 g t2
   | otherwise = balanceR c h l x (joinGT r g t2 h2)
 joinGT _ _ _ _ = error "joinGT"
+
+----------------------------------------------------------------
+
+-- Merging two trees whose heights are the same.
+
+{-
+glue :: Ord a => RBTree a -> RBTree a -> RBTree a
+glue Leaf Leaf = Leaf
+glue (Node B 1 Leaf x Leaf) t2 = insert x t2
+glue t1@(Node B h1 l x r) t2
+  | h1 == h2' = Node B (h1+1) t1 m t2'
+  | otherwise = Node B h1 (Node R h1 (turnB l) x r) m t2'
+  where
+    m  = minimum t2
+    t2' = deleteMin t2
+    h2' = height t2'
+glue _ _ = error "glue"
+-}
+
+----------------------------------------------------------------
+
+split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
+split _ Leaf = (Leaf,Leaf)
+split kx (Node _ _ l x r) = case compare kx x of
+    LT -> (lt, join gt x r) where (lt,gt) = split kx l
+    GT -> (join l x lt, gt) where (lt,gt) = split kx r
+    EQ -> (turnB' l, r)
+
+----------------------------------------------------------------
+
+union :: Ord a => RBTree a -> RBTree a -> RBTree a
+union t1 Leaf = t1
+union Leaf t2 = t2
+union t1 (Node _ _ l x r) = join (union l' (turnB' l)) x (union r' r)
+  where
+    (l',r') = split x t1

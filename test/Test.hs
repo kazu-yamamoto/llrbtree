@@ -28,7 +28,7 @@ tests = [ testGroup "Property Test" [
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
              , testProperty "join"               prop_join
---             , testProperty "glue"               prop_glue
+             , testProperty "merge"              prop_merge
              , testProperty "union"              prop_union
              , testProperty "unionModel"         prop_unionModel
 #endif
@@ -129,6 +129,13 @@ prop_join (x:xs) = valid $ join (fromList ys) x (fromList zs)
     ys = filter (<x) xs
     zs = filter (>x) xs
 
+prop_merge :: [Int] -> Bool
+prop_merge [] = True
+prop_merge (x:xs) = valid $ merge (fromList ys) (fromList zs)
+  where
+    ys = filter (<x) xs
+    zs = filter (>x) xs
+
 prop_union :: [Int] -> [Int] -> Bool
 prop_union xs ys = valid $ union (fromList xs) (fromList ys)
 
@@ -137,19 +144,6 @@ prop_unionModel xs ys = zs == zs'
   where
     zs = L.nub $ L.sort $ L.union xs ys
     zs' = toList $ union (fromList xs) (fromList ys)
-
-{-
-prop_glue :: [Int] -> [Int] -> Property
-prop_glue xs ys = not (null xs) ==>
-                  not (null ys) ==>
-                  height t1 == height t2 ==>
-                  valid $ glue t1 t2
-  where
-    m = L.maximum xs
-    ys' = map (+m) ys
-    t1 = fromList xs
-    t2 = fromList ys'
--}
 #endif
 
 main :: IO ()

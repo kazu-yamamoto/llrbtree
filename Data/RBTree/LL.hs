@@ -12,7 +12,7 @@ module Data.RBTree.LL (
   , minimum
   , maximum
   , join
---  , glue
+  , merge
   , split
   , union
   , valid
@@ -278,12 +278,14 @@ join t1 g t2 = case compare h1 h2 of
     h1 = height t1
     h2 = height t2
 
+-- The root of result must be red.
 joinLT :: Ord a => RBTree a -> a -> RBTree a -> BlackHeight -> RBTree a
 joinLT t1 g t2@(Node c h l x r) h1
   | h == h1   = Node R (h+1) t1 g t2
   | otherwise = balanceL c h (joinLT t1 g l h1) x r
 joinLT _ _ _ _ = error "joinLT"
 
+-- The root of result must be red.
 joinGT :: Ord a => RBTree a -> a -> RBTree a -> BlackHeight -> RBTree a
 joinGT t1@(Node c h l x r) g t2 h2
   | h == h2   = Node R (h+1) t1 g t2
@@ -292,21 +294,48 @@ joinGT _ _ _ _ = error "joinGT"
 
 ----------------------------------------------------------------
 
--- Merging two trees whose heights are the same.
+merge :: Ord a => RBTree a -> RBTree a -> RBTree a
+merge Leaf t2 = t2
+merge t1 Leaf = t1
+merge t1 t2 = case compare h1 h2 of
+    LT -> turnB $ mergeLT t1 t2 h1
+    GT -> turnB $ mergeGT t1 t2 h2
+    EQ -> turnB $ mergeEQ t1 t2
+  where
+    h1 = height t1
+    h2 = height t2
+
+mergeLT :: Ord a => RBTree a -> RBTree a -> BlackHeight -> RBTree a
+mergeLT t1 t2@(Node c h l x r) h1
+  | h == h1   = mergeEQ t1 t2
+  | otherwise = balanceL c h (mergeLT t1 l h1) x r
+mergeLT _ _ _ = error "mergeLT"
+
+mergeGT :: Ord a => RBTree a -> RBTree a -> BlackHeight -> RBTree a
+mergeGT t1@(Node c h l x r) t2 h2
+  | h == h2   = mergeEQ t1 t2
+  | otherwise = balanceR c h l x (mergeGT r t2 h2)
+mergeGT _ _ _ = error "mergeGT"
 
 {-
-glue :: Ord a => RBTree a -> RBTree a -> RBTree a
-glue Leaf Leaf = Leaf
-glue (Node B 1 Leaf x Leaf) t2 = insert x t2
-glue t1@(Node B h1 l x r) t2
-  | h1 == h2' = Node B (h1+1) t1 m t2'
-  | otherwise = Node B h1 (Node R h1 (turnB l) x r) m t2'
+  Merging two trees whose heights are the same.
+  The root must be either
+     a red with height + 1
+  for
+     a black with height
+-}
+
+mergeEQ :: Ord a => RBTree a -> RBTree a -> RBTree a
+mergeEQ Leaf Leaf = Leaf
+mergeEQ t1@(Node _ h l x r) t2
+  | h == h2'  = Node R (h+1) t1 m t2'
+  | isRed l   = Node R (h+1) (turnB l) x (Node B h r m t2')
+  | otherwise = Node B h (turnR t1) m t2'
   where
     m  = minimum t2
     t2' = deleteMin t2
     h2' = height t2'
-glue _ _ = error "glue"
--}
+mergeEQ _ _ = error "mergeEQ"
 
 ----------------------------------------------------------------
 

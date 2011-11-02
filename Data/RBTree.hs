@@ -1,19 +1,38 @@
 {-# LANGUAGE CPP #-}
+{-|
+  Purely functional left-leaning red-black trees.
+
+   * Robert Sedgewick, \"Left-Leaning Red-Black Trees\",
+     Data structures seminar at Dagstuhl, Feb 2008.
+     <http://www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf>
+
+   * Robert Sedgewick, \"Left-Leaning Red-Black Trees\",
+     Analysis of Algorithms meeting at Maresias, Apr 2008
+     <http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf>
+-}
 
 module Data.RBTree (
+  -- * Data structures
     RBTree(..)
   , Color(..)
+  , BlackHeight
+  -- * Creating red-black trees
   , empty
   , insert
   , fromList
+  -- * Converting a list
   , toList
+  -- * Membership
   , member
+  -- * Deleting
   , delete
   , deleteMin
   , deleteMax
+  -- * Set operations
   , union
   , intersection
   , difference
+  -- * Helper functions
   , join
   , merge
   , split

@@ -8,7 +8,13 @@ data RBTree a = Leaf -- color is Black
               | Node Color !BlackHeight !(RBTree a) a !(RBTree a)
               deriving (Eq,Show)
 
-data Color = B | R deriving (Eq,Show)
+data Color = B -- ^ Black
+           | R -- ^ Red
+           deriving (Eq,Show)
+
+{-|
+  Red nodes have the same BlackHeight of their parent.
+-}
 type BlackHeight = Int
 
 ----------------------------------------------------------------

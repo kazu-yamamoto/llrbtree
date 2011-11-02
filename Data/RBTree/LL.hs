@@ -13,8 +13,8 @@ import Prelude hiding (minimum, maximum)
 
 ----------------------------------------------------------------
 
-valid :: RBTree a -> Bool
-valid t = isBalanced t && isLeftLean t && blackHeight t
+valid :: Ord a => RBTree a -> Bool
+valid t = isBalanced t && isLeftLean t && blackHeight t && isOrdered t
 
 isLeftLean :: RBTree a -> Bool
 isLeftLean Leaf = True

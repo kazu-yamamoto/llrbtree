@@ -38,14 +38,6 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-toList :: RBTree a -> [a]
-toList t = inorder t []
-  where
-    inorder Leaf xs = xs
-    inorder (Node _ _ l x r) xs = inorder l (x : inorder r xs)
-
-----------------------------------------------------------------
-
 member :: Ord a => a -> RBTree a -> Bool
 member _ Leaf = False
 member x (Node _ _ l y r) = case compare x y of
@@ -123,30 +115,64 @@ mergeEQ Leaf Leaf = Leaf
 mergeEQ t1@(Node _ h l x r) t2
   | h == h2'  = Node R (h+1) t1 m t2'
   | isRed l   = Node R (h+1) (turnB l) x (Node B h r m t2')
+  | isRed r   = Node B h (Node R h l x rl) rx (Node R h rr m t2')
+  | otherwise = Node B h (turnR t1) m t2'
+  where
+    m  = minimum t2
+    t2' = deleteMin t2
+    h2' = height t2'
+    Node R _ rl rx rr = r
+mergeEQ _ _ = error "mergeEQ"
+
+{-
+mergeEQ :: Ord a => RBTree a -> RBTree a -> RBTree a
+mergeEQ Leaf Leaf = Leaf
+mergeEQ t1@(Node _ h l x r) t2
+  | h == h2'  = Node R (h+1) t1 m t2'
+  | isRed l   = Node R (h+1) (turnB l) x (Node B h r m t2')
   | otherwise = Node B h (turnR t1) m t2'
   where
     m  = minimum t2
     t2' = deleteMin t2
     h2' = height t2'
 mergeEQ _ _ = error "mergeEQ"
+-}
 
 ----------------------------------------------------------------
 
 split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
 split _ Leaf = (Leaf,Leaf)
 split kx (Node _ _ l x r) = case compare kx x of
+    LT -> (lt, join gt x (turnB' r)) where (lt,gt) = split kx l
+    GT -> (join (turnB' l) x lt, gt) where (lt,gt) = split kx r
+    EQ -> (turnB' l, turnB' r)
+
+{- LL XXX why this?
+split :: (Show a, Ord a) => a -> RBTree a -> (RBTree a, RBTree a)
+split _ Leaf = (Leaf,Leaf)
+split kx (Node _ _ l x r) = case compare kx x of
     LT -> (lt, join gt x r) where (lt,gt) = split kx l
     GT -> (join l x lt, gt) where (lt,gt) = split kx r
     EQ -> (turnB' l, r)
+-}
 
 ----------------------------------------------------------------
 
 union :: Ord a => RBTree a -> RBTree a -> RBTree a
 union t1 Leaf = t1
 union Leaf t2 = t2
+union t1 (Node _ _ l x r) = join (union l' (turnB' l)) x (union r' (turnB' r))
+  where
+    (l',r') = split x t1
+
+{- LL
+union :: Ord a => RBTree a -> RBTree a -> RBTree a
+union t1 Leaf = t1
+union Leaf t2 = t2
 union t1 (Node _ _ l x r) = join (union l' (turnB' l)) x (union r' r)
   where
     (l',r') = split x t1
+-}
 
 intersection :: Ord a => RBTree a -> RBTree a -> RBTree a
 intersection Leaf _ = Leaf

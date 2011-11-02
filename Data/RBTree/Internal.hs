@@ -24,6 +24,14 @@ empty = Leaf
 
 ----------------------------------------------------------------
 
+toList :: RBTree a -> [a]
+toList t = inorder t []
+  where
+    inorder Leaf xs = xs
+    inorder (Node _ _ l x r) xs = inorder l (x : inorder r xs)
+
+----------------------------------------------------------------
+
 isBalanced :: RBTree a -> Bool
 isBalanced t = isBlackSame t && isRedSeparate t
 
@@ -49,6 +57,12 @@ reds _ Leaf = True
 reds R (Node R _ _ _ _) = False
 reds _ (Node c _ l _ r) = reds c l && reds c r
 
+isOrdered :: Ord a => RBTree a -> Bool
+isOrdered t = ordered $ toList t
+  where
+    ordered [] = True
+    ordered [_] = True
+    ordered (x:y:xys) = x < y && ordered (y:xys)
 
 blackHeight :: RBTree a -> Bool
 blackHeight Leaf = True

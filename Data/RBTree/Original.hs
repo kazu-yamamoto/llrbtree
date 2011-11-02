@@ -12,8 +12,8 @@ import Data.RBTree.Internal
 
 ----------------------------------------------------------------
 
-valid :: RBTree a -> Bool
-valid t = isBalanced t && blackHeight t
+valid :: Ord a => RBTree a -> Bool
+valid t = isBalanced t && blackHeight t && isOrdered t
 
 ----------------------------------------------------------------
 -- Chris Okasaki

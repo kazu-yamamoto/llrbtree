@@ -1,5 +1,7 @@
 module Data.RBTree.Internal where
 
+import Prelude hiding (minimum, maximum)
+
 ----------------------------------------------------------------
 
 data RBTree a = Leaf -- color is Black
@@ -63,23 +65,6 @@ blackHeight _ = error "blackHeight"
 
 ----------------------------------------------------------------
 
-member :: Ord a => a -> RBTree a -> Bool
-member _ Leaf = False
-member x (Node _ _ l y r) = case compare x y of
-    LT -> member x l
-    GT -> member x r
-    EQ -> True
-
-----------------------------------------------------------------
-
-toList :: RBTree a -> [a]
-toList t = inorder t []
-  where
-    inorder Leaf xs = xs
-    inorder (Node _ _ l x r) xs = inorder l (x : inorder r xs)
-
-----------------------------------------------------------------
-
 turnR :: RBTree a -> RBTree a
 turnR Leaf             = error "turnR"
 turnR (Node _ h l x r) = Node R h l x r
@@ -113,6 +98,18 @@ isBlackLeftBlack _                               = False
 isBlackLeftRed :: RBTree a -> Bool
 isBlackLeftRed (Node B _ (Node R _ _ _ _) _ _) = True
 isBlackLeftRed _                               = False
+
+----------------------------------------------------------------
+
+minimum :: RBTree a -> a
+minimum (Node _ _ Leaf x _) = x
+minimum (Node _ _ l _ _)    = minimum l
+minimum _                   = error "minimum"
+
+maximum :: RBTree a -> a
+maximum (Node _ _ _ x Leaf) = x
+maximum (Node _ _ _ _ r)    = maximum r
+maximum _                   = error "maximum"
 
 ----------------------------------------------------------------
 

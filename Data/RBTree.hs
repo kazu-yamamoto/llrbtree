@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Data.RBTree (
     RBTree(..)
   , Color(..)
@@ -9,17 +11,25 @@ module Data.RBTree (
   , delete
   , deleteMin
   , deleteMax
+  , union
+  , intersection
+  , difference
+  , join
+  , merge
+  , split
   , valid
   , showTree
+  , printTree
   ) where
 
 import Data.List (foldl')
 import Data.RBTree.Internal
-
-----------------------------------------------------------------
-
-valid :: RBTree a -> Bool
-valid t = isBalanced t && blackHeight t
+#if METHOD == 1
+import Data.RBTree.Original
+#else
+import Data.RBTree.LL
+#endif
+import Prelude hiding (minimum, maximum)
 
 ----------------------------------------------------------------
 
@@ -27,112 +37,129 @@ fromList :: Ord a => [a] -> RBTree a
 fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
--- Chris Okasaki
---
 
-insert :: Ord a => a -> RBTree a -> RBTree a
-insert kx t = turnB (insert' kx t)
-
-insert' :: Ord a => a -> RBTree a -> RBTree a
-insert' kx Leaf = Node R 1 Leaf kx Leaf
-insert' kx s@(Node c h l x r) = case compare kx x of
-    LT -> balanceL c h (insert' kx l) x r
-    GT -> balanceR c h l x (insert' kx r)
-    EQ -> s
-
-balanceL :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
-balanceL B h (Node R _ (Node R _ a x b) y c) z d =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceL B h (Node R _ a x (Node R _ b y c)) z d =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceL k h l x r = Node k h l x r
-
-balanceR :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
-balanceR B h a x (Node R _ b y (Node R _ c z d)) =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceR B h a x (Node R _ (Node R _ b y c) z d) =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceR k h l x r = Node k h l x r
+toList :: RBTree a -> [a]
+toList t = inorder t []
+  where
+    inorder Leaf xs = xs
+    inorder (Node _ _ l x r) xs = inorder l (x : inorder r xs)
 
 ----------------------------------------------------------------
 
-type RBTreeBDel a = (RBTree a, Bool)
-
-unbalancedL :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTreeBDel a
-unbalancedL c h l@(Node B _ _ _ _) x r
-  = (balanceL B h (turnR l) x r, c == B)
-unbalancedL B h (Node R lh ll lx lr@(Node B _ _ _ _)) x r
-  = (Node B lh ll lx (balanceL B h (turnR lr) x r), False)
-unbalancedL _ _ _ _ _ = error "unbalancedL"
-
--- The left tree lacks one Black node
-unbalancedR :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
--- Decreasing one Black node in the right
-unbalancedR c h l x r@(Node B _ _ _ _)
-  = (balanceR B h l x (turnR r), c == B)
--- Taking one Red node from the right and adding it to the right as Black
-unbalancedR B h l x (Node R rh rl@(Node B _ _ _ _) rx rr)
-  = (Node B rh (balanceR B h l x (turnR rl)) rx rr, False)
-unbalancedR _ _ _ _ _ = error "unbalancedR"
+member :: Ord a => a -> RBTree a -> Bool
+member _ Leaf = False
+member x (Node _ _ l y r) = case compare x y of
+    LT -> member x l
+    GT -> member x r
+    EQ -> True
 
 ----------------------------------------------------------------
 
-deleteMin :: RBTree a -> RBTree a
-deleteMin t = turnB' s
-  where
-    ((s, _), _) = deleteMin' t
+{-
+  Each element of t1 < g.
+  Each element of t2 > g.
+-}
 
-deleteMin' :: RBTree a -> (RBTreeBDel a, a)
-deleteMin' Leaf                           = error "deleteMin'"
-deleteMin' (Node B _ Leaf x Leaf)         = ((Leaf, True), x)
-deleteMin' (Node B _ Leaf x r@(Node R _ _ _ _)) = ((turnB r, False), x)
-deleteMin' (Node R _ Leaf x r)            = ((r, False), x)
-deleteMin' (Node c h l x r)               = if d then (tD, m) else (tD', m)
+join :: Ord a => RBTree a -> a -> RBTree a -> RBTree a
+join Leaf g t2 = insert g t2
+join t1 g Leaf = insert g t1
+join t1 g t2 = case compare h1 h2 of
+    LT -> turnB $ joinLT t1 g t2 h1
+    GT -> turnB $ joinGT t1 g t2 h2
+    EQ -> Node B (h1+1) t1 g t2
   where
-    ((l',d),m) = deleteMin' l
-    tD  = unbalancedR c (h-1) l' x r
-    tD' = (Node c h l' x r, False)
+    h1 = height t1
+    h2 = height t2
+
+-- The root of result must be red.
+joinLT :: Ord a => RBTree a -> a -> RBTree a -> BlackHeight -> RBTree a
+joinLT t1 g t2@(Node c h l x r) h1
+  | h == h1   = Node R (h+1) t1 g t2
+  | otherwise = balanceL c h (joinLT t1 g l h1) x r
+joinLT _ _ _ _ = error "joinLT"
+
+-- The root of result must be red.
+joinGT :: Ord a => RBTree a -> a -> RBTree a -> BlackHeight -> RBTree a
+joinGT t1@(Node c h l x r) g t2 h2
+  | h == h2   = Node R (h+1) t1 g t2
+  | otherwise = balanceR c h l x (joinGT r g t2 h2)
+joinGT _ _ _ _ = error "joinGT"
 
 ----------------------------------------------------------------
 
-deleteMax :: RBTree a -> RBTree a
-deleteMax t = turnB' s
+merge :: Ord a => RBTree a -> RBTree a -> RBTree a
+merge Leaf t2 = t2
+merge t1 Leaf = t1
+merge t1 t2 = case compare h1 h2 of
+    LT -> turnB $ mergeLT t1 t2 h1
+    GT -> turnB $ mergeGT t1 t2 h2
+    EQ -> turnB $ mergeEQ t1 t2
   where
-    ((s, _), _) = deleteMax' t
+    h1 = height t1
+    h2 = height t2
 
-deleteMax' :: RBTree a -> (RBTreeBDel a, a)
-deleteMax' Leaf                           = error "deleteMax'"
-deleteMax' (Node B _ Leaf x Leaf)         = ((Leaf, True), x)
-deleteMax' (Node B _ l@(Node R _ _ _ _) x Leaf) = ((turnB l, False), x)
-deleteMax' (Node R _ l x Leaf)            = ((l, False), x)
-deleteMax' (Node c h l x r)               = if d then (tD, m) else (tD', m)
+mergeLT :: Ord a => RBTree a -> RBTree a -> BlackHeight -> RBTree a
+mergeLT t1 t2@(Node c h l x r) h1
+  | h == h1   = mergeEQ t1 t2
+  | otherwise = balanceL c h (mergeLT t1 l h1) x r
+mergeLT _ _ _ = error "mergeLT"
+
+mergeGT :: Ord a => RBTree a -> RBTree a -> BlackHeight -> RBTree a
+mergeGT t1@(Node c h l x r) t2 h2
+  | h == h2   = mergeEQ t1 t2
+  | otherwise = balanceR c h l x (mergeGT r t2 h2)
+mergeGT _ _ _ = error "mergeGT"
+
+{-
+  Merging two trees whose heights are the same.
+  The root must be either
+     a red with height + 1
+  for
+     a black with height
+-}
+
+mergeEQ :: Ord a => RBTree a -> RBTree a -> RBTree a
+mergeEQ Leaf Leaf = Leaf
+mergeEQ t1@(Node _ h l x r) t2
+  | h == h2'  = Node R (h+1) t1 m t2'
+  | isRed l   = Node R (h+1) (turnB l) x (Node B h r m t2')
+  | otherwise = Node B h (turnR t1) m t2'
   where
-    ((r',d),m) = deleteMax' r
-    tD  = unbalancedL c (h-1) l x r'
-    tD' = (Node c h l x r', False)
+    m  = minimum t2
+    t2' = deleteMin t2
+    h2' = height t2'
+mergeEQ _ _ = error "mergeEQ"
 
 ----------------------------------------------------------------
 
-blackify :: RBTree a -> RBTreeBDel a
-blackify s@(Node R _ _ _ _) = (turnB s, False)
-blackify s                  = (s, True)
+split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
+split _ Leaf = (Leaf,Leaf)
+split kx (Node _ _ l x r) = case compare kx x of
+    LT -> (lt, join gt x r) where (lt,gt) = split kx l
+    GT -> (join l x lt, gt) where (lt,gt) = split kx r
+    EQ -> (turnB' l, r)
 
-delete :: Ord a => a -> RBTree a -> RBTree a
-delete x t = turnB' s
+----------------------------------------------------------------
+
+union :: Ord a => RBTree a -> RBTree a -> RBTree a
+union t1 Leaf = t1
+union Leaf t2 = t2
+union t1 (Node _ _ l x r) = join (union l' (turnB' l)) x (union r' r)
   where
-    (s,_) = delete' x t
+    (l',r') = split x t1
 
-delete' :: Ord a => a -> RBTree a -> RBTreeBDel a
-delete' _ Leaf = (Leaf, False)
-delete' x (Node c h l y r) = case compare x y of
-    LT -> let (l',d) = delete' x l
-              t = Node c h l' y r
-          in if d then unbalancedR c (h-1) l' y r else (t, False)
-    GT -> let (r',d) = delete' x r
-              t = Node c h l y r'
-          in if d then unbalancedL c (h-1) l y r' else (t, False)
-    EQ -> case r of
-        Leaf -> if c == B then blackify l else (l, False)
-        _ -> let ((r',d),m) = deleteMin' r
-                 t = Node c h l m r'
-             in if d then unbalancedL c (h-1) l m r' else (t, False)
+intersection :: Ord a => RBTree a -> RBTree a -> RBTree a
+intersection Leaf _ = Leaf
+intersection _ Leaf = Leaf
+intersection t1 (Node _ _ l x r)
+  | member x t1 = join (intersection l' l) x (intersection r' r)
+  | otherwise   = merge (intersection l' l) (intersection r' r)
+  where
+    (l',r') = split x t1
+
+difference :: Ord a => RBTree a -> RBTree a -> RBTree a
+difference Leaf _  = Leaf
+difference t1 Leaf = t1
+difference t1 (Node _ _ l x r) = merge (difference l' l) (difference r' r)
+  where
+    (l',r') = split x t1

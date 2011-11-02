@@ -1,13 +1,7 @@
-{-# LANGUAGE CPP #-}
-
 module Main where
 
 import qualified Data.List as L
-#if METHOD == 1
 import Data.RBTree
-#else
-import Data.RBTree.LL
-#endif
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.QuickCheck2
 
@@ -25,7 +19,6 @@ tests = [ testGroup "Property Test" [
              , testProperty "deleteMin2"         prop_deleteMin2
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
-#if METHOD != 1
              , testProperty "join"               prop_join
              , testProperty "merge"              prop_merge
              , testProperty "union"              prop_union
@@ -34,7 +27,6 @@ tests = [ testGroup "Property Test" [
              , testProperty "intersectionModel"  prop_intersectionModel
              , testProperty "difference"         prop_difference
              , testProperty "differenceModel"    prop_differenceModel
-#endif
              ]
         ]
 
@@ -124,7 +116,6 @@ prop_deleteMax2 xs = ys == zs
     ys = reverse . toList $ t'
     zs = tail . L.nub . L.sortBy (flip compare) $ xs
 
-#if METHOD != 1
 prop_join :: [Int] -> Bool
 prop_join [] = True
 prop_join (x:xs) = valid $ join (fromList ys) x (fromList zs)
@@ -165,7 +156,6 @@ prop_differenceModel xs ys = zs == zs'
   where
     zs = L.sort $ L.nub xs L.\\ ys
     zs' = toList $ difference (fromList xs) (fromList ys)
-#endif
 
 main :: IO ()
 main = defaultMain tests

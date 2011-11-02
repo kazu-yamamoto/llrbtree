@@ -14,13 +14,16 @@ tests = [ testGroup "Property Test" [
              , testProperty "deleteRoot"         prop_deleteRoot
              , testProperty "deleteLeaf"         prop_deleteLeaf
              , testProperty "deleteNon"          prop_deleteNon
-             , testProperty "delete2"            prop_delete2
+             , testProperty "deleteModel"        prop_deleteModel
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
              , testProperty "join"               prop_join
              , testProperty "merge"              prop_merge
+             , testProperty "split"              prop_split
+             , testProperty "splitRoot"          prop_splitRoot
+             , testProperty "splitLeaf"          prop_splitLeaf
              , testProperty "union"              prop_union
              , testProperty "unionModel"         prop_unionModel
              , testProperty "intersection"       prop_intersection
@@ -46,6 +49,14 @@ prop_member (x:xs) = member x t
   where
     t = fromList (x:xs)
 
+prop_delete :: [Int] -> Bool
+prop_delete [] = True
+prop_delete xs = valid t'
+  where
+    t = fromList xs
+    n = length xs `div` 2
+    t' = delete (xs !! n) t
+
 prop_deleteRoot :: [Int] -> Bool
 prop_deleteRoot [] = True
 prop_deleteRoot xxs@(x:_) = valid t'
@@ -67,17 +78,9 @@ prop_deleteNon xs x = valid t'
     t = fromList xs
     t' = delete x t
 
-prop_delete :: [Int] -> Bool
-prop_delete [] = True
-prop_delete xs = valid t'
-  where
-    t = fromList xs
-    n = length xs `div` 2
-    t' = delete (xs !! n) t
-
-prop_delete2 :: [Int] -> Bool
-prop_delete2 [] = True
-prop_delete2 xxs@(x:xs) = ys == zs
+prop_deleteModel :: [Int] -> Bool
+prop_deleteModel [] = True
+prop_deleteModel xxs@(x:xs) = ys == zs
   where
     t = fromList xxs
     t' = delete x t
@@ -129,6 +132,28 @@ prop_merge (x:xs) = valid $ merge (fromList ys) (fromList zs)
   where
     ys = filter (<x) xs
     zs = filter (>x) xs
+
+prop_split :: [Int] -> Bool
+prop_split [] = True
+prop_split xs = valid lt && valid gt
+  where
+    t = fromList xs
+    n = length xs `div` 2
+    (lt,gt) = split (xs !! n) t
+
+prop_splitRoot :: [Int] -> Bool
+prop_splitRoot [] = True
+prop_splitRoot xxs@(x:_) = valid lt && valid gt
+  where
+    t = fromList xxs
+    (lt,gt) = split x t
+
+prop_splitLeaf :: [Int] -> Bool
+prop_splitLeaf [] = True
+prop_splitLeaf xs = valid lt && valid gt
+  where
+    t = fromList xs
+    (lt,gt) = split (last xs) t
 
 prop_union :: [Int] -> [Int] -> Bool
 prop_union xs ys = valid $ union (fromList xs) (fromList ys)

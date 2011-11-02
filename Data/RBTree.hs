@@ -124,7 +124,7 @@ mergeEQ t1@(Node _ h l x r) t2
     Node R _ rl rx rr = r
 mergeEQ _ _ = error "mergeEQ"
 
-{-
+{- LL
 mergeEQ :: Ord a => RBTree a -> RBTree a -> RBTree a
 mergeEQ Leaf Leaf = Leaf
 mergeEQ t1@(Node _ h l x r) t2
@@ -147,7 +147,7 @@ split kx (Node _ _ l x r) = case compare kx x of
     GT -> (join (turnB' l) x lt, gt) where (lt,gt) = split kx r
     EQ -> (turnB' l, turnB' r)
 
-{- LL XXX why this?
+{- LL
 split :: (Show a, Ord a) => a -> RBTree a -> (RBTree a, RBTree a)
 split _ Leaf = (Leaf,Leaf)
 split kx (Node _ _ l x r) = case compare kx x of
@@ -159,9 +159,9 @@ split kx (Node _ _ l x r) = case compare kx x of
 ----------------------------------------------------------------
 
 union :: Ord a => RBTree a -> RBTree a -> RBTree a
-union t1 Leaf = t1
-union Leaf t2 = t2
-union t1 (Node _ _ l x r) = join (union l' (turnB' l)) x (union r' (turnB' r))
+union t1 Leaf = t1 -- ensured Black thanks to split
+union Leaf t2 = turnB' t2
+union t1 (Node _ _ l x r) = join (union l' l) x (union r' r)
   where
     (l',r') = split x t1
 
@@ -185,7 +185,7 @@ intersection t1 (Node _ _ l x r)
 
 difference :: Ord a => RBTree a -> RBTree a -> RBTree a
 difference Leaf _  = Leaf
-difference t1 Leaf = t1
+difference t1 Leaf = t1 -- ensured Black thanks to split
 difference t1 (Node _ _ l x r) = merge (difference l' l) (difference r' r)
   where
     (l',r') = split x t1

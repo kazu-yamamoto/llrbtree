@@ -165,15 +165,6 @@ union t1 (Node _ _ l x r) = join (union l' l) x (union r' r)
   where
     (l',r') = split x t1
 
-{- LL
-union :: Ord a => RBTree a -> RBTree a -> RBTree a
-union t1 Leaf = t1
-union Leaf t2 = t2
-union t1 (Node _ _ l x r) = join (union l' (turnB' l)) x (union r' r)
-  where
-    (l',r') = split x t1
--}
-
 intersection :: Ord a => RBTree a -> RBTree a -> RBTree a
 intersection Leaf _ = Leaf
 intersection _ Leaf = Leaf

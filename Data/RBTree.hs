@@ -115,6 +115,7 @@ mergeEQ Leaf Leaf = Leaf
 mergeEQ t1@(Node _ h l x r) t2
   | h == h2'  = Node R (h+1) t1 m t2'
   | isRed l   = Node R (h+1) (turnB l) x (Node B h r m t2')
+  -- unnecessary for LL
   | isRed r   = Node B h (Node R h l x rl) rx (Node R h rr m t2')
   | otherwise = Node B h (turnR t1) m t2'
   where
@@ -123,20 +124,6 @@ mergeEQ t1@(Node _ h l x r) t2
     h2' = height t2'
     Node R _ rl rx rr = r
 mergeEQ _ _ = error "mergeEQ"
-
-{- LL
-mergeEQ :: Ord a => RBTree a -> RBTree a -> RBTree a
-mergeEQ Leaf Leaf = Leaf
-mergeEQ t1@(Node _ h l x r) t2
-  | h == h2'  = Node R (h+1) t1 m t2'
-  | isRed l   = Node R (h+1) (turnB l) x (Node B h r m t2')
-  | otherwise = Node B h (turnR t1) m t2'
-  where
-    m  = minimum t2
-    t2' = deleteMin t2
-    h2' = height t2'
-mergeEQ _ _ = error "mergeEQ"
--}
 
 ----------------------------------------------------------------
 

@@ -135,7 +135,7 @@ split kx (Node _ _ l x r) = case compare kx x of
     EQ -> (turnB' l, turnB' r)
 
 {- LL
-split :: (Show a, Ord a) => a -> RBTree a -> (RBTree a, RBTree a)
+split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
 split _ Leaf = (Leaf,Leaf)
 split kx (Node _ _ l x r) = case compare kx x of
     LT -> (lt, join gt x r) where (lt,gt) = split kx l

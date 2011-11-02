@@ -50,6 +50,7 @@ member x (Node _ _ l y r) = case compare x y of
 {-
   Each element of t1 < g.
   Each element of t2 > g.
+  Both t1 and t2 must be Black.
 -}
 
 join :: Ord a => RBTree a -> a -> RBTree a -> RBTree a
@@ -78,6 +79,11 @@ joinGT t1@(Node c h l x r) g t2 h2
 joinGT _ _ _ _ = error "joinGT"
 
 ----------------------------------------------------------------
+
+{-
+  Each element of t1 < each element of t2
+  Both t1 and t2 must be Black.
+-}
 
 merge :: Ord a => RBTree a -> RBTree a -> RBTree a
 merge Leaf t2 = t2

@@ -23,9 +23,9 @@ tests = [ testGroup "Property Test" [
              , testProperty "delete2"            prop_delete2
              , testProperty "deleteMin"          prop_deleteMin
              , testProperty "deleteMin2"         prop_deleteMin2
-#if METHOD != 1
              , testProperty "deleteMax"          prop_deleteMax
              , testProperty "deleteMax2"         prop_deleteMax2
+#if METHOD != 1
              , testProperty "join"               prop_join
              , testProperty "merge"              prop_merge
              , testProperty "union"              prop_union
@@ -108,7 +108,6 @@ prop_deleteMin2 xs = ys == zs
     ys = toList t'
     zs = tail . L.nub . L.sort $ xs
 
-#if METHOD != 1
 prop_deleteMax :: [Int] -> Bool
 prop_deleteMax [] = True
 prop_deleteMax xs = valid t'
@@ -125,6 +124,7 @@ prop_deleteMax2 xs = ys == zs
     ys = reverse . toList $ t'
     zs = tail . L.nub . L.sortBy (flip compare) $ xs
 
+#if METHOD != 1
 prop_join :: [Int] -> Bool
 prop_join [] = True
 prop_join (x:xs) = valid $ join (fromList ys) x (fromList zs)

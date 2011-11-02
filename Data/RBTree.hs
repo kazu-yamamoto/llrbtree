@@ -6,11 +6,11 @@ module Data.RBTree (
   , fromList
   , toList
   , member
-{-
   , delete
   , deleteMin
--}
+  , deleteMax
   , valid
+  , showTree
   ) where
 
 import Data.List (foldl')
@@ -54,65 +54,85 @@ balanceR B h a x (Node R _ (Node R _ b y c) z d) =
     Node R (h+1) (Node B h a x b) y (Node B h c z d)
 balanceR k h l x r = Node k h l x r
 
-{-XXX
 ----------------------------------------------------------------
 
 type RBTreeBDel a = (RBTree a, Bool)
 
-unbalancedL :: Color -> RBTree a -> a -> RBTree a -> RBTreeBDel a
-unbalancedL c (Node B t1 x1 t2) x2 t3 = (balanceL B (Node R t1 x1 t2) x2 t3, c == B)
-unbalancedL B (Node R t1 x1 (Node B t2 x2 t3)) x3 t4 = (Node B t1 x1 (balanceL B (Node R t2 x2 t3) x3 t4), False)
-unbalancedL _ _ _ _ = error "unbalancedL"
+unbalancedL :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTreeBDel a
+unbalancedL c h l@(Node B _ _ _ _) x r
+  = (balanceL B h (turnR l) x r, c == B)
+unbalancedL B h (Node R lh ll lx lr@(Node B _ _ _ _)) x r
+  = (Node B lh ll lx (balanceL B h (turnR lr) x r), False)
+unbalancedL _ _ _ _ _ = error "unbalancedL"
 
 -- The left tree lacks one Black node
-unbalancedR :: Color -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
+unbalancedR :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
 -- Decreasing one Black node in the right
-unbalancedR c t1 x1 (Node B t2 x2 t3) = (balanceR B t1 x1 (Node R t2 x2 t3), c == B)
+unbalancedR c h l x r@(Node B _ _ _ _)
+  = (balanceR B h l x (turnR r), c == B)
 -- Taking one Red node from the right and adding it to the right as Black
-unbalancedR B t1 x1 (Node R (Node B t2 x2 t3) x3 t4) = (Node B (balanceR B t1 x1 (Node R t2 x2 t3)) x3 t4, False)
-unbalancedR _ _ _ _ = error "unbalancedR"
+unbalancedR B h l x (Node R rh rl@(Node B _ _ _ _) rx rr)
+  = (Node B rh (balanceR B h l x (turnR rl)) rx rr, False)
+unbalancedR _ _ _ _ _ = error "unbalancedR"
 
 ----------------------------------------------------------------
 
 deleteMin :: RBTree a -> RBTree a
-deleteMin t = s
+deleteMin t = turnB' s
   where
     ((s, _), _) = deleteMin' t
 
 deleteMin' :: RBTree a -> (RBTreeBDel a, a)
 deleteMin' Leaf                           = error "deleteMin'"
-deleteMin' (Node B Leaf x Leaf)           = ((Leaf, True), x)
-deleteMin' (Node B Leaf x (Node R l y r)) = ((Node B l y r, False), x)
-deleteMin' (Node R Leaf x r)              = ((r, False), x)
-deleteMin' (Node c l x r)                 = if d then (tD, m) else (tD', m)
+deleteMin' (Node B _ Leaf x Leaf)         = ((Leaf, True), x)
+deleteMin' (Node B _ Leaf x r@(Node R _ _ _ _)) = ((turnB r, False), x)
+deleteMin' (Node R _ Leaf x r)            = ((r, False), x)
+deleteMin' (Node c h l x r)               = if d then (tD, m) else (tD', m)
   where
     ((l',d),m) = deleteMin' l
-    tD  = unbalancedR c l' x r
-    tD' = (Node c l' x r, False)
+    tD  = unbalancedR c (h-1) l' x r
+    tD' = (Node c h l' x r, False)
+
+----------------------------------------------------------------
+
+deleteMax :: RBTree a -> RBTree a
+deleteMax t = turnB' s
+  where
+    ((s, _), _) = deleteMax' t
+
+deleteMax' :: RBTree a -> (RBTreeBDel a, a)
+deleteMax' Leaf                           = error "deleteMax'"
+deleteMax' (Node B _ Leaf x Leaf)         = ((Leaf, True), x)
+deleteMax' (Node B _ l@(Node R _ _ _ _) x Leaf) = ((turnB l, False), x)
+deleteMax' (Node R _ l x Leaf)            = ((l, False), x)
+deleteMax' (Node c h l x r)               = if d then (tD, m) else (tD', m)
+  where
+    ((r',d),m) = deleteMax' r
+    tD  = unbalancedL c (h-1) l x r'
+    tD' = (Node c h l x r', False)
 
 ----------------------------------------------------------------
 
 blackify :: RBTree a -> RBTreeBDel a
-blackify s@(Node R _ _ _) = (turnB s, False)
-blackify s                = (s, True)
+blackify s@(Node R _ _ _ _) = (turnB s, False)
+blackify s                  = (s, True)
 
 delete :: Ord a => a -> RBTree a -> RBTree a
-delete x t = s
+delete x t = turnB' s
   where
     (s,_) = delete' x t
 
 delete' :: Ord a => a -> RBTree a -> RBTreeBDel a
 delete' _ Leaf = (Leaf, False)
-delete' x (Node c l y r) = case compare x y of
+delete' x (Node c h l y r) = case compare x y of
     LT -> let (l',d) = delete' x l
-              t = Node c l' y r
-          in if d then unbalancedR c l' y r else (t, False)
+              t = Node c h l' y r
+          in if d then unbalancedR c (h-1) l' y r else (t, False)
     GT -> let (r',d) = delete' x r
-              t = Node c l y r'
-          in if d then unbalancedL c l y r' else (t, False)
+              t = Node c h l y r'
+          in if d then unbalancedL c (h-1) l y r' else (t, False)
     EQ -> case r of
         Leaf -> if c == B then blackify l else (l, False)
         _ -> let ((r',d),m) = deleteMin' r
-                 t = Node c l m r'
-             in if d then unbalancedL c l m r' else (t, False)
--}
+                 t = Node c h l m r'
+             in if d then unbalancedL c (h-1) l m r' else (t, False)

@@ -103,6 +103,16 @@ isRed :: RBTree a -> Bool
 isRed (Node R _ _ _ _ ) = True
 isRed _               = False
 
+----------------------------------------------------------------
+
+isBlackLeftBlack :: RBTree a -> Bool
+isBlackLeftBlack (Node B _ Leaf _ _)             = True
+isBlackLeftBlack (Node B _ (Node B _ _ _ _) _ _) = True
+isBlackLeftBlack _                               = False
+
+isBlackLeftRed :: RBTree a -> Bool
+isBlackLeftRed (Node B _ (Node R _ _ _ _) _ _) = True
+isBlackLeftRed _                               = False
 
 ----------------------------------------------------------------
 
@@ -116,3 +126,6 @@ showTree' pref (Node k h l x r) = show k ++ " " ++ show x ++ " (" ++ show h ++ "
                                ++ pref ++ "+ " ++ showTree' pref' r
   where
     pref' = "  " ++ pref
+
+printTree :: Show a => RBTree a -> IO ()
+printTree = putStr . showTree

@@ -68,18 +68,6 @@ balanceR c h l x r = Node c h l x r
 
 ----------------------------------------------------------------
 
-isBlackLeftBlack :: RBTree a -> Bool
-isBlackLeftBlack (Node B _ Leaf _ _)             = True
-isBlackLeftBlack (Node B _ (Node B _ _ _ _) _ _) = True
-isBlackLeftBlack _                               = False
-
-
-isBlackLeftRed :: RBTree a -> Bool
-isBlackLeftRed (Node B _ (Node R _ _ _ _) _ _) = True
-isBlackLeftRed _                               = False
-
-----------------------------------------------------------------
-
 deleteMin :: RBTree a -> RBTree a
 deleteMin t = case deleteMin' (turnR t) of
     Leaf -> Leaf

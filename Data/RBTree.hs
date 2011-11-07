@@ -1,6 +1,12 @@
 {-|
   Purely functional red-black trees.
 
+    * Chris Okasaki, \"Red-Black Trees in a Functional Setting\",
+	  Journal of Functional Programming, 9(4), pp 471-477, July 1999
+      <http://www.eecs.usma.edu/webs/people/okasaki/pubs.html#jfp99>
+
+    * Stefan Kahrs, \"Red-black trees with types\",
+      Journal of functional programming, 11(04), pp 425-432, July 2001
 -}
 
 module Data.RBTree (

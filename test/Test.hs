@@ -1,7 +1,13 @@
+{-# LANGUAGE CPP #-}
+
 module Main where
 
 import qualified Data.List as L
+#ifdef METHOD == 1
 import Data.RBTree
+#else
+import Data.RBTree.LL
+#endif
 import Test.Framework (defaultMain, testGroup, Test)
 import Test.Framework.Providers.QuickCheck2
 

@@ -1,14 +1,6 @@
-{-# LANGUAGE CPP #-}
 {-|
-  Purely functional left-leaning red-black trees.
+  Purely functional red-black trees.
 
-   * Robert Sedgewick, \"Left-Leaning Red-Black Trees\",
-     Data structures seminar at Dagstuhl, Feb 2008.
-     <http://www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf>
-
-   * Robert Sedgewick, \"Left-Leaning Red-Black Trees\",
-     Analysis of Algorithms meeting at Maresias, Apr 2008
-     <http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf>
 -}
 
 module Data.RBTree (
@@ -43,26 +35,13 @@ module Data.RBTree (
 
 import Data.List (foldl')
 import Data.RBTree.Internal
-#if METHOD == 1
 import Data.RBTree.Original
-#else
-import Data.RBTree.LL
-#endif
 import Prelude hiding (minimum, maximum)
 
 ----------------------------------------------------------------
 
 fromList :: Ord a => [a] -> RBTree a
 fromList = foldl' (flip insert) empty
-
-----------------------------------------------------------------
-
-member :: Ord a => a -> RBTree a -> Bool
-member _ Leaf = False
-member x (Node _ _ l y r) = case compare x y of
-    LT -> member x l
-    GT -> member x r
-    EQ -> True
 
 ----------------------------------------------------------------
 

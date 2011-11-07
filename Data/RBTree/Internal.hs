@@ -38,6 +38,15 @@ toList t = inorder t []
 
 ----------------------------------------------------------------
 
+member :: Ord a => a -> RBTree a -> Bool
+member _ Leaf = False
+member x (Node _ _ l y r) = case compare x y of
+    LT -> member x l
+    GT -> member x r
+    EQ -> True
+
+----------------------------------------------------------------
+
 isBalanced :: RBTree a -> Bool
 isBalanced t = isBlackSame t && isRedSeparate t
 

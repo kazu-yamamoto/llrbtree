@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP, TemplateHaskell #-}
 
 module Main where
 
@@ -8,36 +8,11 @@ import Data.RBTree
 #else
 import Data.RBTree.LL
 #endif
-import Test.Framework (defaultMain, testGroup, Test)
+import Test.Framework.TH
 import Test.Framework.Providers.QuickCheck2
 
-tests :: [Test]
-tests = [ testGroup "Property Test" [
-               testProperty "fromList"           prop_fromList
-             , testProperty "toList"             prop_toList
-             , testProperty "member"             prop_member
-             , testProperty "delete"             prop_delete
-             , testProperty "deleteRoot"         prop_deleteRoot
-             , testProperty "deleteLeaf"         prop_deleteLeaf
-             , testProperty "deleteNon"          prop_deleteNon
-             , testProperty "deleteModel"        prop_deleteModel
-             , testProperty "deleteMin"          prop_deleteMin
-             , testProperty "deleteMin2"         prop_deleteMin2
-             , testProperty "deleteMax"          prop_deleteMax
-             , testProperty "deleteMax2"         prop_deleteMax2
-             , testProperty "join"               prop_join
-             , testProperty "merge"              prop_merge
-             , testProperty "split"              prop_split
-             , testProperty "splitRoot"          prop_splitRoot
-             , testProperty "splitLeaf"          prop_splitLeaf
-             , testProperty "union"              prop_union
-             , testProperty "unionModel"         prop_unionModel
-             , testProperty "intersection"       prop_intersection
-             , testProperty "intersectionModel"  prop_intersectionModel
-             , testProperty "difference"         prop_difference
-             , testProperty "differenceModel"    prop_differenceModel
-             ]
-        ]
+main :: IO ()
+main = $(defaultMainGenerator)
 
 prop_fromList :: [Int] -> Bool
 prop_fromList xs = valid $ fromList xs
@@ -187,6 +162,3 @@ prop_differenceModel xs ys = zs == zs'
   where
     zs = L.sort $ L.nub xs L.\\ ys
     zs' = toList $ difference (fromList xs) (fromList ys)
-
-main :: IO ()
-main = defaultMain tests

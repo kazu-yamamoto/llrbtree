@@ -8,11 +8,20 @@ import Data.RBTree
 #else
 import Data.RBTree.LL
 #endif
-import Test.Framework.TH
+
+import Test.Framework.TH.Prime
+import Test.Framework.Providers.DocTest
 import Test.Framework.Providers.QuickCheck2
 
 main :: IO ()
 main = $(defaultMainGenerator)
+
+doc_test :: DocTests
+#ifdef METHOD == 1
+doc_test = docTest ["../Data/RBTree.hs"] ["-i.."]
+#else
+doc_test = docTest ["../Data/RBTree/LL.hs"] ["-i.."]
+#endif
 
 prop_fromList :: [Int] -> Bool
 prop_fromList xs = valid $ fromList xs

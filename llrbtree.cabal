@@ -1,11 +1,13 @@
 Name:                   llrbtree
-Version:                0.0.1
+Version:                0.0.2
 Author:                 Kazu Yamamoto <kazu@iij.ad.jp>
 Maintainer:             Kazu Yamamoto <kazu@iij.ad.jp>
 License:                BSD3
 License-File:           LICENSE
-Synopsis:               Left-Leaning Red-Black Tree
-Description:            Left-Leaning Red-Black Tree
+Synopsis:               Set implementations with trees
+Description:            Set implemantations with red-black trees,
+                        left-leaning red-black Trees,
+                        and weight balanced trees (trees of bounded balance).
 Category:               Data
 Cabal-Version:          >= 1.6
 Build-Type:             Simple

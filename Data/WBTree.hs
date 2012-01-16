@@ -1,5 +1,25 @@
-{-| Purely functional weight balanced trees, aka trees of bounded balanced.
+{-|
+  Purely functional weight balanced trees, aka trees of bounded balance.
 
+    * J. Nievergelt and E.M. Reingold, \"Binary search trees of
+      bounded balance\", Proceedings of the fourth annual ACM symposium on
+      Theory of computing, pp 137-142, 1972.
+
+    * S. Adams, \"Implementing sets efficiently in a functional language\",
+      Technical Report CSTR 92-10, University of Southampton, 1992.
+      <http://groups.csail.mit.edu/mac/users/adams/BB/>
+
+    * S. Adam, \"Efficient sets: a balancing act\", 
+      Journal of Functional Programming, Vol 3, Issue 4, pp 553-562. 
+
+    * Y. Hirai and K. Yamamoto,
+      \"Balancing Weight-Balanced Trees\",
+      Journal of Functional Programming. Vol 21, Issue 03, pp 287-307. 
+      <http://mew.org/~kazu/proj/weight-balanced-tree/>
+    
+    * M. Strake, \"Adams' Trees Revisited - Correct and Efficient Implementation\",
+      TFP 2011.
+      <http://fox.ucw.cz/papers/bbtree/>
 -}
 
 module Data.WBTree (
@@ -435,3 +455,13 @@ isBalanced a b = delta * (size a + 1) >= (size b + 1)
 
 isSingle :: WBTree a -> WBTree a -> Bool
 isSingle a b = (size a + 1) < gamma * (size b + 1)
+
+{- Adams's variant
+isBalanced :: WBTree a -> WBTree a -> Bool
+isBalanced a b = x + y <= 1 || delta * x >= y
+  where x = size a
+        y = size b
+
+isSingle :: WBTree a -> WBTree a -> Bool
+isSingle a b = size a < gamma * size b
+-}

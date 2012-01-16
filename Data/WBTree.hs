@@ -63,7 +63,7 @@ import Prelude hiding (minimum, maximum, null)
 ----------------------------------------------------------------
 
 type Size = Int
-data WBTree a = Leaf | Node Size a (WBTree a) (WBTree a) deriving (Show)
+data WBTree a = Leaf | Node Size (WBTree a) a (WBTree a) deriving (Show)
 
 
 instance (Eq a) => Eq (WBTree a) where
@@ -105,12 +105,12 @@ empty = Leaf
 -}
 
 singleton :: a -> WBTree a
-singleton k = Node 1 k Leaf Leaf
+singleton x = Node 1 Leaf x Leaf
 
 ----------------------------------------------------------------
 
-node :: a -> WBTree a -> WBTree a -> WBTree a
-node k l r = Node (size l + size r + 1) k l r
+node :: WBTree a -> a -> WBTree a -> WBTree a
+node l x r = Node (size l + size r + 1) l x r
 
 ----------------------------------------------------------------
 
@@ -125,11 +125,11 @@ True
 -}
 
 insert :: Ord a => a -> WBTree a -> WBTree a
-insert kx Leaf = singleton kx
-insert kx (Node sz ky l r) = case compare kx ky of
-    LT -> balanceR ky (insert kx l) r
-    GT -> balanceL ky l (insert kx r)
-    EQ -> Node sz kx l r
+insert k Leaf = singleton k
+insert k (Node sz l x r) = case compare k x of
+    LT -> balanceR (insert k l) x r
+    GT -> balanceL l x (insert k r)
+    EQ -> Node sz l x r
 
 {-| Creating a tree from a list. O(N log N)
 
@@ -157,8 +157,8 @@ fromList = foldl' (flip insert) empty
 toList :: WBTree a -> [a]
 toList t = inorder t []
   where
-    inorder Leaf xs = xs
-    inorder (Node _ x l r) xs = inorder l (x : inorder r xs)
+    inorder Leaf xs           = xs
+    inorder (Node _ l x r) xs = inorder l (x : inorder r xs)
 
 ----------------------------------------------------------------
 
@@ -172,51 +172,50 @@ False
 
 member :: Ord a => a -> WBTree a -> Bool
 member _ Leaf = False
-member x (Node _ y l r) = case compare x y of
-    LT -> member x l
-    GT -> member x r
+member k (Node _ l x r) = case compare k x of
+    LT -> member k l
+    GT -> member k r
     EQ -> True
 
 ----------------------------------------------------------------
 
-balanceL :: a -> WBTree a -> WBTree a -> WBTree a
-balanceL k l r
-  | isBalanced l r = node k l r
-  | otherwise      = rotateL k l r
+balanceL :: WBTree a -> a -> WBTree a -> WBTree a
+balanceL l x r
+  | isBalanced l r = node l x r
+  | otherwise      = rotateL l x r
 
-balanceR :: a -> WBTree a -> WBTree a -> WBTree a
-balanceR k l r
-  | isBalanced r l = node k l r
-  | otherwise      = rotateR k l r
+balanceR :: WBTree a -> a -> WBTree a -> WBTree a
+balanceR l x r
+  | isBalanced r l = node l x r
+  | otherwise      = rotateR l x r
 
-rotateL :: a -> WBTree a -> WBTree a -> WBTree a
-rotateL k l r@(Node _ _ rl rr)
-  | isSingle rl rr = singleL k l r
-  | otherwise      = doubleL k l r
+rotateL :: WBTree a -> a -> WBTree a -> WBTree a
+rotateL l x r@(Node _ rl _ rr)
+  | isSingle rl rr = singleL l x r
+  | otherwise      = doubleL l x r
 rotateL _ _ _      = error "rotateL"
 
-rotateR :: a -> WBTree a -> WBTree a -> WBTree a
-rotateR k l@(Node _ _ ll lr) r
-  | isSingle lr ll = singleR k l r
-  | otherwise      = doubleR k l r
+rotateR :: WBTree a -> a -> WBTree a -> WBTree a
+rotateR l@(Node _ ll _ lr) x r
+  | isSingle lr ll = singleR l x r
+  | otherwise      = doubleR l x r
 rotateR _ _ _      = error "rotateR"
 
-singleL :: a -> WBTree a -> WBTree a -> WBTree a
-singleL k1 t1 (Node _ k2 t2 t3) = node k2 (node k1 t1 t2) t3
-singleL _ _ _                   = error "singleL"
+singleL :: WBTree a -> a -> WBTree a -> WBTree a
+singleL l x (Node _ rl rx rr) = node (node l x rl) rx rr
+singleL _ _ _                 = error "singleL"
 
-singleR :: a -> WBTree a -> WBTree a -> WBTree a
-singleR k1 (Node _ k2 t1 t2) t3 = node k2 t1 (node k1 t2 t3)
-singleR _ _ _                   = error "singleR"
+singleR :: WBTree a -> a -> WBTree a -> WBTree a
+singleR (Node _ ll lx lr) x r = node ll lx (node lr x r)
+singleR _ _ _                 = error "singleR"
 
+doubleL :: WBTree a -> a -> WBTree a -> WBTree a
+doubleL l x (Node _ (Node _ rll rlx rlr) rx rr) = node (node l x rll) rlx (node rlr rx rr)
+doubleL _ _ _                                   = error "doubleL"
 
-doubleL :: a -> WBTree a -> WBTree a -> WBTree a
-doubleL k1 t1 (Node _ k2 (Node _ k3 t2 t3) t4) = node k3 (node k1 t1 t2) (node k2 t3 t4)
-doubleL _ _ _ = error "doubleL"
-
-doubleR :: a -> WBTree a -> WBTree a -> WBTree a
-doubleR k1 (Node _ k2 t1 (Node _ k3 t2 t3)) t4 = node k3 (node k2 t1 t2) (node k1 t3 t4)
-doubleR _ _ _ = error "doubleR"
+doubleR :: WBTree a -> a -> WBTree a -> WBTree a
+doubleR (Node _ ll lx (Node _ lrl lrx lrr)) x r = node (node ll lx lrl) lrx (node lrr x r)
+doubleR _ _ _                                   = error "doubleR"
 
 ----------------------------------------------------------------
 
@@ -229,9 +228,9 @@ True
 -}
 
 deleteMin :: WBTree a -> WBTree a
-deleteMin (Node _ _  Leaf r) = r
-deleteMin (Node _ kx l r)    = balanceL kx (deleteMin l) r
-deleteMin Leaf               = Leaf
+deleteMin (Node _ Leaf _ r) = r
+deleteMin (Node _ l x r)    = balanceL (deleteMin l) x r
+deleteMin Leaf              = Leaf
 
 {-| Deleting the maximum
 
@@ -242,9 +241,9 @@ True
 -}
 
 deleteMax :: WBTree a -> WBTree a
-deleteMax (Node _ _ l Leaf)  = l
-deleteMax (Node _ kx l r)    = balanceR kx l (deleteMax r)
-deleteMax Leaf               = Leaf
+deleteMax (Node _ l _ Leaf) = l
+deleteMax (Node _ l x r)    = balanceR l x (deleteMax r)
+deleteMax Leaf              = Leaf
 
 ----------------------------------------------------------------
 
@@ -259,14 +258,12 @@ True
 -}
 
 delete :: Ord a => a -> WBTree a -> WBTree a
-delete k t
-  = case t of
-      Leaf -> Leaf
-      Node _ kx l r
-          -> case compare k kx of
-               LT -> balanceL kx (delete k l) r
-               GT -> balanceR kx l (delete k r)
-               EQ -> glue l r
+delete k t = case t of
+    Leaf -> Leaf
+    Node _ l x r -> case compare k x of
+        LT -> balanceL (delete k l) x r
+        GT -> balanceR l x (delete k r)
+        EQ -> glue l r
 
 ----------------------------------------------------------------
 
@@ -274,33 +271,28 @@ delete k t
 -}
 
 valid :: Ord a => WBTree a -> Bool
-valid t
-  = balanced t && ordered t && validsize t
+valid t = balanced t && ordered t && validsize t
 
 balanced :: WBTree a -> Bool
 balanced Leaf           = True
-balanced (Node _ _ l r) = isBalanced l r && isBalanced r l
+balanced (Node _ l _ r) = isBalanced l r && isBalanced r l
                        && balanced l     && balanced r
 
 ordered :: Ord a => WBTree a -> Bool
-ordered t
-  = bounded (const True) (const True) t
+ordered t = bounded (const True) (const True) t
   where
-    bounded lo hi t'
-      = case t' of
-          Leaf              -> True
-          Node _ kx l r  -> lo kx && hi kx && bounded lo (<kx) l && bounded (>kx) hi r
+    bounded lo hi t' = case t' of
+        Leaf         -> True
+        Node _ l x r -> lo x && hi x && bounded lo (<x) l && bounded (>x) hi r
 
 validsize :: WBTree a -> Bool
-validsize t
-  = (realsize t == Just (size t))
+validsize t = realsize t == Just (size t)
   where
-    realsize t'
-      = case t' of
-          Leaf            -> Just 0
-          Node sz _ l r -> case (realsize l,realsize r) of
-              (Just n,Just m)  | n+m+1 == sz  -> Just sz
-              _                               -> Nothing
+    realsize t' = case t' of
+        Leaf            -> Just 0
+        Node s l _ r -> case (realsize l,realsize r) of
+            (Just n,Just m)  | n+m+1 == s -> Just s
+            _                             -> Nothing
 
 ----------------------------------------------------------------
 
@@ -311,12 +303,12 @@ validsize t
 -}
 
 join :: Ord a => WBTree a -> a -> WBTree a -> WBTree a
-join Leaf kx r   = insert kx r
-join l kx Leaf   = insert kx l
-join l@(Node _ ky ly ry) kx r@(Node _ kz lz rz)
-  | bal1 && bal2 = node kx l r
-  | bal1         = balanceL ky ly (join ry kx r)
-  | otherwise    = balanceR kz (join l kx lz) rz
+join Leaf x r   = insert x r
+join l x Leaf   = insert x l
+join l@(Node _ ll lx lr) x r@(Node _ rl rx rr)
+  | bal1 && bal2 = node l x r
+  | bal1         = balanceL ll lx (join lr x r)
+  | otherwise    = balanceR (join l x rl) rx rr
   where
     bal1 = isBalanced l r
     bal2 = isBalanced r l
@@ -330,10 +322,10 @@ join l@(Node _ ky ly ry) kx r@(Node _ kz lz rz)
 merge :: WBTree a -> WBTree a -> WBTree a
 merge Leaf r   = r
 merge l Leaf   = l
-merge l@(Node _ kx lx rx) r@(Node _ ky ly ry)
+merge l@(Node _ ll lx lr) r@(Node _ rl rx rr)
   | bal1 && bal2 = glue l r
-  | bal1         = balanceL kx lx (merge rx r)
-  | otherwise    = balanceR ky (merge l ly) ry
+  | bal1         = balanceL ll lx (merge lr r)
+  | otherwise    = balanceR (merge l rl) rx rr
   where
     bal1 = isBalanced l r
     bal2 = isBalanced r l
@@ -342,12 +334,8 @@ glue :: WBTree a -> WBTree a -> WBTree a
 glue Leaf r = r
 glue l Leaf = l
 glue l r
-  | size l > size r = let km = maximum l
-                          l' = deleteMax l
-                      in balanceL km l' r
-  | otherwise       = let km = minimum r
-                          r' = deleteMin r
-                      in balanceR km l r'
+  | size l > size r = balanceL (deleteMax l) (maximum l) r
+  | otherwise       = balanceR l (minimum r) (deleteMin r)
 
 {-| Splitting a tree. O(log N)
 
@@ -364,12 +352,11 @@ True
 -}
 
 split :: Ord a => a -> WBTree a -> (WBTree a, WBTree a)
-split _ Leaf = (Leaf,Leaf)
-split k (Node _ kx l r)
-  = case compare k kx of
-      LT -> let (lt,gt) = split k l in (lt,join gt kx r)
-      GT -> let (lt,gt) = split k r in (join l kx lt,gt)
-      EQ -> (l,r)
+split _ Leaf           = (Leaf,Leaf)
+split k (Node _ l x r) = case compare k x of
+    LT -> let (lt,gt) = split k l in (lt,join gt x r)
+    GT -> let (lt,gt) = split k r in (join l x lt,gt)
+    EQ -> (l,r)
 
 ----------------------------------------------------------------
 
@@ -382,8 +369,8 @@ split k (Node _ kx l r)
 -}
 
 minimum :: WBTree a -> a
-minimum (Node _ x Leaf _) = x
-minimum (Node _ _ l _)    = minimum l
+minimum (Node _ Leaf x _) = x
+minimum (Node _ l _ _)    = minimum l
 minimum _                 = error "minimum"
 
 {-| Finding the maximum element. O(log N)
@@ -395,7 +382,7 @@ minimum _                 = error "minimum"
 -}
 
 maximum :: WBTree a -> a
-maximum (Node _ x _ Leaf) = x
+maximum (Node _ _ x Leaf) = x
 maximum (Node _ _ _ r)    = maximum r
 maximum _                 = error "maximum"
 
@@ -410,7 +397,7 @@ True
 union :: Ord a => WBTree a -> WBTree a -> WBTree a
 union t1 Leaf = t1
 union Leaf t2 = t2
-union t1 (Node _ x l r) = join (union l' l) x (union r' r)
+union t1 (Node _ l x r) = join (union l' l) x (union r' r)
   where
     (l',r') = split x t1
 
@@ -423,7 +410,7 @@ True
 intersection :: Ord a => WBTree a -> WBTree a -> WBTree a
 intersection Leaf _ = Leaf
 intersection _ Leaf = Leaf
-intersection t1 (Node _ x l r)
+intersection t1 (Node _ l x r)
   | member x t1 = join (intersection l' l) x (intersection r' r)
   | otherwise   = merge (intersection l' l) (intersection r' r)
   where
@@ -438,7 +425,7 @@ True
 difference :: Ord a => WBTree a -> WBTree a -> WBTree a
 difference Leaf _  = Leaf
 difference t1 Leaf = t1
-difference t1 (Node _ x l r) = merge (difference l' l) (difference r' r)
+difference t1 (Node _ l x r) = merge (difference l' l) (difference r' r)
   where
     (l',r') = split x t1
 

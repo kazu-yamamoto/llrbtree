@@ -38,9 +38,9 @@ module Data.RBTree.LL (
   , join
   , merge
   , split
-  , valid
   , minimum
   , maximum
+  , valid
   , showTree
   , printTree
   ) where
@@ -221,10 +221,26 @@ turnB' (Node _ h l x r) = Node B h l x r
 
 ----------------------------------------------------------------
 
+{-| Finding the minimum element. O(log N)
+
+>>> minimum (fromList [3,5,1])
+1
+>>> minimum empty
+*** Exception: minimum
+-}
+
 minimum :: RBTree a -> a
 minimum (Node _ _ Leaf x _) = x
 minimum (Node _ _ l _ _)    = minimum l
 minimum _                   = error "minimum"
+
+{-| Finding the maximum element. O(log N)
+
+>>> maximum (fromList [3,5,1])
+5
+>>> maximum empty
+*** Exception: maximum
+-}
 
 maximum :: RBTree a -> a
 maximum (Node _ _ _ x Leaf) = x
@@ -267,6 +283,9 @@ isBlackLeftRed _                               = False
 ----------------------------------------------------------------
 -- Basic operations
 ----------------------------------------------------------------
+
+{-| Checking validity of a tree.
+-}
 
 valid :: Ord a => RBTree a -> Bool
 valid t = isBalanced t && isLeftLean t && blackHeight t && isOrdered t
@@ -516,10 +535,11 @@ deleteEQ _ _ _ _ _ _ = error "deleteEQ"
 -- Set operations
 ----------------------------------------------------------------
 
-{-
-  Each element of t1 < g.
-  Each element of t2 > g.
-  Both t1 and t2 must be Black.
+{-| Joining two trees with an element. O(log N)
+
+    Each element of the left tree must be less than the element.
+    Each element of the right tree must be greater than the element.
+    Both tree must have black root.
 -}
 
 join :: Ord a => RBTree a -> a -> RBTree a -> RBTree a
@@ -549,9 +569,10 @@ joinGT _ _ _ _ = error "joinGT"
 
 ----------------------------------------------------------------
 
-{-
-  Each element of t1 < each element of t2
-  Both t1 and t2 must be Black.
+{-| Merging two trees. O(log N)
+
+    Each element of the left tree must be less than each element of
+    the right tree. Both trees must have black root.
 -}
 
 merge :: Ord a => RBTree a -> RBTree a -> RBTree a
@@ -598,6 +619,20 @@ mergeEQ t1@(Node _ h l x r) t2
 mergeEQ _ _ = error "mergeEQ"
 
 ----------------------------------------------------------------
+
+{-| Splitting a tree. O(log N)
+
+>>> split 2 (fromList [5,3]) == (empty, fromList [3,5])
+True
+>>> split 3 (fromList [5,3]) == (empty, singleton 5)
+True
+>>> split 4 (fromList [5,3]) == (singleton 3, singleton 5)
+True
+>>> split 5 (fromList [5,3]) == (singleton 3, empty)
+True
+>>> split 6 (fromList [5,3]) == (fromList [3,5], empty)
+True
+-}
 
 split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
 split _ Leaf = (Leaf,Leaf)

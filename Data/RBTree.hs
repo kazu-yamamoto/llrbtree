@@ -37,9 +37,9 @@ module Data.RBTree (
   , join
   , merge
   , split
-  , valid
   , minimum
   , maximum
+  , valid
   , showTree
   , printTree
   ) where
@@ -272,6 +272,9 @@ isRed _               = False
 -- Basic operations
 ----------------------------------------------------------------
 
+{-| Checking validity of a tree.
+-}
+
 valid :: Ord a => RBTree a -> Bool
 valid t = isBalanced t && blackHeight t && isOrdered t
 
@@ -428,10 +431,11 @@ delete' x (Node c h l y r) = case compare x y of
 -- Set operations
 ----------------------------------------------------------------
 
-{-
-  Each element of t1 < g.
-  Each element of t2 > g.
-  Both t1 and t2 must be Black.
+{-| Joining two trees with an element. O(log N)
+
+    Each element of the left tree must be less than the element.
+    Each element of the right tree must be greater than the element.
+    Both tree must have black root.
 -}
 
 join :: Ord a => RBTree a -> a -> RBTree a -> RBTree a
@@ -461,9 +465,10 @@ joinGT _ _ _ _ = error "joinGT"
 
 ----------------------------------------------------------------
 
-{-
-  Each element of t1 < each element of t2
-  Both t1 and t2 must be Black.
+{-| Merging two trees. O(log N)
+
+    Each element of the left tree must be less than each element of
+    the right tree. Both trees must have black root.
 -}
 
 merge :: Ord a => RBTree a -> RBTree a -> RBTree a

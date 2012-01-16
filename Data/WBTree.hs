@@ -30,9 +30,9 @@ module Data.WBTree (
   , join
   , merge
   , split
-  , valid
   , minimum
   , maximum
+  , valid
 --  , showTree
 --  , printTree
   ) where
@@ -250,6 +250,9 @@ delete k t
 
 ----------------------------------------------------------------
 
+{-| Checking validity of a tree.
+-}
+
 valid :: Ord a => WBTree a -> Bool
 valid t
   = balanced t && ordered t && validsize t
@@ -281,6 +284,12 @@ validsize t
 
 ----------------------------------------------------------------
 
+{-| Joining two trees with an element. O(log N)
+
+    Each element of the left tree must be less than the element.
+    Each element of the right tree must be greater than the element.
+-}
+
 join :: Ord a => WBTree a -> a -> WBTree a -> WBTree a
 join Leaf kx r   = insert kx r
 join l kx Leaf   = insert kx l
@@ -291,6 +300,12 @@ join l@(Node _ ky ly ry) kx r@(Node _ kz lz rz)
   where
     bal1 = isBalanced l r
     bal2 = isBalanced r l
+
+{-| Merging two trees. O(log N)
+
+    Each element of the left tree must be less than each element of
+    the right tree.
+-}
 
 merge :: WBTree a -> WBTree a -> WBTree a
 merge Leaf r   = r

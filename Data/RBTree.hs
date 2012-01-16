@@ -220,10 +220,26 @@ turnB' (Node _ h l x r) = Node B h l x r
 
 ----------------------------------------------------------------
 
+{-| Finding the minimum element. O(log N)
+
+>>> minimum (fromList [3,5,1])
+1
+>>> minimum empty
+*** Exception: minimum
+-}
+
 minimum :: RBTree a -> a
 minimum (Node _ _ Leaf x _) = x
 minimum (Node _ _ l _ _)    = minimum l
 minimum _                   = error "minimum"
+
+{-| Finding the maximum element. O(log N)
+
+>>> maximum (fromList [3,5,1])
+5
+>>> maximum empty
+*** Exception: maximum
+-}
 
 maximum :: RBTree a -> a
 maximum (Node _ _ _ x Leaf) = x
@@ -384,7 +400,7 @@ blackify s                  = (s, True)
 True
 >>> delete 7 (fromList [5,3]) == fromList [3,5]
 True
->>> delete 5 empty                         == empty
+>>> delete 5 empty            == empty
 True
 -}
 
@@ -497,6 +513,20 @@ mergeEQ t1@(Node _ h l x r) t2
 mergeEQ _ _ = error "mergeEQ"
 
 ----------------------------------------------------------------
+
+{-| Splitting a tree. O(log N)
+
+>>> split 2 (fromList [5,3]) == (empty, fromList [3,5])
+True
+>>> split 3 (fromList [5,3]) == (empty, singleton 5)
+True
+>>> split 4 (fromList [5,3]) == (singleton 3, singleton 5)
+True
+>>> split 5 (fromList [5,3]) == (singleton 3, empty)
+True
+>>> split 6 (fromList [5,3]) == (fromList [3,5], empty)
+True
+-}
 
 split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
 split _ Leaf = (Leaf,Leaf)

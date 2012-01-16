@@ -3,8 +3,12 @@
 module Main where
 
 import qualified Data.List as L
-#ifdef METHOD == 1
+#if   METHOD == 1
 import Data.RBTree
+#elif METHOD == 2
+import Data.RBTree.LL
+#elif METHOD == 3
+import Data.WBTree
 #else
 import Data.RBTree.LL
 #endif
@@ -17,8 +21,12 @@ main :: IO ()
 main = $(defaultMainGenerator)
 
 doc_test :: DocTests
-#ifdef METHOD == 1
+#if   METHOD == 1
 doc_test = docTest ["../Data/RBTree.hs"] ["-i.."]
+#elif METHOD == 2
+doc_test = docTest ["../Data/RBTree/LL.hs"] ["-i.."]
+#elif METHOD == 3
+doc_test = docTest ["../Data/WBTree.hs"] ["-i.."]
 #else
 doc_test = docTest ["../Data/RBTree/LL.hs"] ["-i.."]
 #endif

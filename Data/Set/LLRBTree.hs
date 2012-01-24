@@ -1,23 +1,24 @@
 {-|
-  Purely functional red-black trees.
+  Purely functional left-leaning red-black trees.
 
-    * Chris Okasaki, \"Red-Black Trees in a Functional Setting\",
-	  Journal of Functional Programming, 9(4), pp 471-477, July 1999
-      <http://www.eecs.usma.edu/webs/people/okasaki/pubs.html#jfp99>
+   * Robert Sedgewick, \"Left-Leaning Red-Black Trees\",
+     Data structures seminar at Dagstuhl, Feb 2008.
+     <http://www.cs.princeton.edu/~rs/talks/LLRB/LLRB.pdf>
 
-    * Stefan Kahrs, \"Red-black trees with types\",
-      Journal of functional programming, 11(04), pp 425-432, July 2001
+   * Robert Sedgewick, \"Left-Leaning Red-Black Trees\",
+     Analysis of Algorithms meeting at Maresias, Apr 2008
+     <http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf>
 -}
 
-module Data.RBTree (
+module Data.Set.LLRBTree (
   -- * Data structures
     RBTree(..)
   , Color(..)
   , BlackHeight
   -- * Creating red-black trees
   , empty
-  , singleton
   , insert
+  , singleton
   , fromList
   -- * Converting a list
   , toList
@@ -80,9 +81,9 @@ height (Node _ h _ _ _) = h
 {-|
 See if the red black tree is empty.
 
->>> Data.RBTree.null empty
+>>> Data.RBTree.LL.null empty
 True
->>> Data.RBTree.null (singleton 1)
+>>> Data.RBTree.LL.null (singleton 1)
 False
 -}
 
@@ -269,6 +270,17 @@ isRed (Node R _ _ _ _ ) = True
 isRed _               = False
 
 ----------------------------------------------------------------
+
+isBlackLeftBlack :: RBTree a -> Bool
+isBlackLeftBlack (Node B _ Leaf _ _)             = True
+isBlackLeftBlack (Node B _ (Node B _ _ _ _) _ _) = True
+isBlackLeftBlack _                               = False
+
+isBlackLeftRed :: RBTree a -> Bool
+isBlackLeftRed (Node B _ (Node R _ _ _ _) _ _) = True
+isBlackLeftRed _                               = False
+
+----------------------------------------------------------------
 -- Basic operations
 ----------------------------------------------------------------
 
@@ -276,11 +288,14 @@ isRed _               = False
 -}
 
 valid :: Ord a => RBTree a -> Bool
-valid t = isBalanced t && blackHeight t && isOrdered t
+valid t = isBalanced t && isLeftLean t && blackHeight t && isOrdered t
+
+isLeftLean :: RBTree a -> Bool
+isLeftLean Leaf = True
+isLeftLean (Node B _ _ _ (Node R _ _ _ _)) = False -- right only and both!
+isLeftLean (Node _ _ r _ l) = isLeftLean r && isLeftLean l
 
 ----------------------------------------------------------------
--- Chris Okasaki
---
 
 {-| Insertion. O(log N)
 
@@ -297,45 +312,23 @@ insert kx t = turnB (insert' kx t)
 
 insert' :: Ord a => a -> RBTree a -> RBTree a
 insert' kx Leaf = Node R 1 Leaf kx Leaf
-insert' kx s@(Node c h l x r) = case compare kx x of
+insert' kx t@(Node c h l x r) = case compare kx x of
     LT -> balanceL c h (insert' kx l) x r
     GT -> balanceR c h l x (insert' kx r)
-    EQ -> s
+    EQ -> t
 
 balanceL :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
-balanceL B h (Node R _ (Node R _ a x b) y c) z d =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceL B h (Node R _ a x (Node R _ b y c)) z d =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceL k h l x r = Node k h l x r
+balanceL B h (Node R _ ll@(Node R _ _ _ _) lx lr) x r =
+    Node R (h+1) (turnB ll) lx (Node B h lr x r)
+balanceL c h l x r = Node c h l x r
 
 balanceR :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
-balanceR B h a x (Node R _ b y (Node R _ c z d)) =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceR B h a x (Node R _ (Node R _ b y c) z d) =
-    Node R (h+1) (Node B h a x b) y (Node B h c z d)
-balanceR k h l x r = Node k h l x r
-
-----------------------------------------------------------------
-
-type RBTreeBDel a = (RBTree a, Bool)
-
-unbalancedL :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTreeBDel a
-unbalancedL c h l@(Node B _ _ _ _) x r
-  = (balanceL B h (turnR l) x r, c == B)
-unbalancedL B h (Node R lh ll lx lr@(Node B _ _ _ _)) x r
-  = (Node B lh ll lx (balanceL B h (turnR lr) x r), False)
-unbalancedL _ _ _ _ _ = error "unbalancedL"
-
--- The left tree lacks one Black node
-unbalancedR :: Color -> BlackHeight -> RBTree a -> a -> RBTree a -> (RBTree a, Bool)
--- Decreasing one Black node in the right
-unbalancedR c h l x r@(Node B _ _ _ _)
-  = (balanceR B h l x (turnR r), c == B)
--- Taking one Red node from the right and adding it to the right as Black
-unbalancedR B h l x (Node R rh rl@(Node B _ _ _ _) rx rr)
-  = (Node B rh (balanceR B h l x (turnR rl)) rx rr, False)
-unbalancedR _ _ _ _ _ = error "unbalancedR"
+balanceR B h l@(Node R _ _ _ _) x r@(Node R _ _ _ _) =
+    Node R (h+1) (turnB l) x (turnB r)
+-- x is Black since Red eliminated by the case above
+-- x is either Node or Leaf
+balanceR c h l x (Node R rh rl rx rr) = Node c h (Node R rh l x rl) rx rr
+balanceR c h l x r = Node c h l x r
 
 ----------------------------------------------------------------
 
@@ -349,20 +342,58 @@ True
 
 deleteMin :: RBTree a -> RBTree a
 deleteMin Leaf = empty
-deleteMin t = turnB' s
-  where
-    ((s, _), _) = deleteMin' t
+deleteMin t = case deleteMin' (turnR t) of
+    Leaf -> Leaf
+    s    -> turnB s
 
-deleteMin' :: RBTree a -> (RBTreeBDel a, a)
-deleteMin' Leaf                           = error "deleteMin'"
-deleteMin' (Node B _ Leaf x Leaf)         = ((Leaf, True), x)
-deleteMin' (Node B _ Leaf x r@(Node R _ _ _ _)) = ((turnB r, False), x)
-deleteMin' (Node R _ Leaf x r)            = ((r, False), x)
-deleteMin' (Node c h l x r)               = if d then (tD, m) else (tD', m)
+{-
+  This deleteMin' keeps an invariant: the target node is always red.
+
+  If the left child of the minimum node is Leaf, the right child
+  MUST be Leaf thanks to the invariants of LLRB.
+-}
+
+deleteMin' :: RBTree a -> RBTree a
+deleteMin' (Node R _ Leaf _ Leaf) = Leaf -- deleting the minimum
+deleteMin' t@(Node R h l x r)
+  -- Red
+  | isRed l      = Node R h (deleteMin' l) x r
+  -- Black-Black
+  | isBB && isBR = hardMin t
+  | isBB         = balanceR B (h-1) (deleteMin' (turnR l)) x (turnR r)
+  -- Black-Red
+  | otherwise    = Node R h (Node B lh (deleteMin' ll) lx lr) x r -- ll is Red
   where
-    ((l',d),m) = deleteMin' l
-    tD  = unbalancedR c (h-1) l' x r
-    tD' = (Node c h l' x r, False)
+    isBB = isBlackLeftBlack l
+    isBR = isBlackLeftRed r
+    Node B lh ll lx lr = l -- to skip Black
+deleteMin' _ = error "deleteMin'"
+
+-- Simplified but not keeping the invariant.
+{-
+deleteMin' :: RBTree a -> RBTree a
+deleteMin' (Node R _ Leaf _ Leaf) = Leaf
+deleteMin' t@(Node R h l x r)
+  | isBB && isBR = hardMin t
+  | isBB         = balanceR B (h-1) (deleteMin' (turnR l)) x (turnR r)
+  where
+    isBB = isBlackLeftBlack l
+    isBR = isBlackLeftRed r
+deleteMin' (Node c h l x r) = Node c h (deleteMin' l) x r
+deleteMin' _ = error "deleteMin'"
+-}
+
+{-
+  The hardest case. See slide 61 of:
+	http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf
+-}
+
+hardMin :: RBTree a -> RBTree a
+hardMin (Node R h l x (Node B rh (Node R _ rll rlx rlr) rx rr))
+    = Node R h (Node B rh (deleteMin' (turnR l)) x rll)
+               rlx
+               (Node B rh rlr rx rr)
+hardMin _ = error "hardMin"
 
 ----------------------------------------------------------------
 
@@ -376,26 +407,68 @@ True
 
 deleteMax :: RBTree a -> RBTree a
 deleteMax Leaf = empty
-deleteMax t = turnB' s
-  where
-    ((s, _), _) = deleteMax' t
+deleteMax t = case deleteMax' (turnR t) of
+    Leaf -> Leaf
+    s    -> turnB s
 
-deleteMax' :: RBTree a -> (RBTreeBDel a, a)
-deleteMax' Leaf                           = error "deleteMax'"
-deleteMax' (Node B _ Leaf x Leaf)         = ((Leaf, True), x)
-deleteMax' (Node B _ l@(Node R _ _ _ _) x Leaf) = ((turnB l, False), x)
-deleteMax' (Node R _ l x Leaf)            = ((l, False), x)
-deleteMax' (Node c h l x r)               = if d then (tD, m) else (tD', m)
+{-
+  This deleteMax' keeps an invariant: the target node is always red.
+
+  If the right child of the minimum node is Leaf, the left child
+  is:
+
+  1) A Leaf -- we can delete it
+  2) A red node -- we can rotateR it and have 1).
+-}
+
+deleteMax' :: RBTree a -> RBTree a
+deleteMax' (Node R _ Leaf _ Leaf) = Leaf -- deleting the maximum
+deleteMax' t@(Node R h l x r)
+  | isRed l      = rotateR t
+  -- Black-Black
+  | isBB && isBR = hardMax t
+  | isBB         = balanceR B (h-1) (turnR l) x (deleteMax' (turnR r))
+  -- Black-Red
+  | otherwise    = Node R h l x (rotateR r)
   where
-    ((r',d),m) = deleteMax' r
-    tD  = unbalancedL c (h-1) l x r'
-    tD' = (Node c h l x r', False)
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
+deleteMax' _ = error "deleteMax'"
+
+-- Simplified but not keeping the invariant.
+{-
+deleteMax' :: RBTree a -> RBTree a
+deleteMax' (Node R _ Leaf _ Leaf) = Leaf
+deleteMax' t@(Node _ _ (Node R _ _ _ _) _ _) = rotateR t
+deleteMax' t@(Node R h l x r)
+  | isBB && isBR = hardMax t
+  | isBB         = balanceR B (h-1) (turnR l) x (deleteMax' (turnR r))
+  where
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
+deleteMax' (Node R h l x r) = Node R h l x (deleteMax' r)
+deleteMax' _ = error "deleteMax'"
+-}
+
+{-
+  rotateR ensures that the maximum node is in the form of (Node R Leaf _ Leaf).
+-}
+
+rotateR :: RBTree a -> RBTree a
+rotateR (Node c h (Node R _ ll lx lr) x r) = balanceR c h ll lx (deleteMax' (Node R h lr x r))
+rotateR _ = error "rorateR"
+
+{-
+  The hardest case. See slide 56 of:
+	http://www.cs.princeton.edu/~rs/talks/LLRB/RedBlack.pdf
+-}
+
+hardMax :: RBTree a -> RBTree a
+hardMax (Node R h (Node B lh ll@(Node R _ _ _ _ ) lx lr) x r)
+    = Node R h (turnB ll) lx (balanceR B lh lr x (deleteMax' (turnR r)))
+hardMax _              = error "hardMax"
 
 ----------------------------------------------------------------
-
-blackify :: RBTree a -> RBTreeBDel a
-blackify s@(Node R _ _ _ _) = (turnB s, False)
-blackify s                  = (s, True)
 
 {-| Deleting this element from a tree. O(log N)
 
@@ -403,29 +476,60 @@ blackify s                  = (s, True)
 True
 >>> delete 7 (fromList [5,3]) == fromList [3,5]
 True
->>> delete 5 empty            == empty
+>>> delete 5 empty                         == empty
 True
 -}
 
 delete :: Ord a => a -> RBTree a -> RBTree a
-delete x t = turnB' s
-  where
-    (s,_) = delete' x t
+delete _ Leaf = empty
+delete kx t = case delete' kx (turnR t) of
+    Leaf -> Leaf
+    t'   -> turnB t'
 
-delete' :: Ord a => a -> RBTree a -> RBTreeBDel a
-delete' _ Leaf = (Leaf, False)
-delete' x (Node c h l y r) = case compare x y of
-    LT -> let (l',d) = delete' x l
-              t = Node c h l' y r
-          in if d then unbalancedR c (h-1) l' y r else (t, False)
-    GT -> let (r',d) = delete' x r
-              t = Node c h l y r'
-          in if d then unbalancedL c (h-1) l y r' else (t, False)
-    EQ -> case r of
-        Leaf -> if c == B then blackify l else (l, False)
-        _ -> let ((r',d),m) = deleteMin' r
-                 t = Node c h l m r'
-             in if d then unbalancedL c (h-1) l m r' else (t, False)
+delete' :: Ord a => a -> RBTree a -> RBTree a
+delete' _ Leaf = Leaf
+delete' kx (Node c h l x r) = case compare kx x of
+    LT -> deleteLT kx c h l x r
+    GT -> deleteGT kx c h l x r
+    EQ -> deleteEQ kx c h l x r
+
+deleteLT :: Ord a => a -> Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+deleteLT kx R h l x r
+  | isBB && isBR = Node R h (Node B rh (delete' kx (turnR l)) x rll) rlx (Node B rh rlr rx rr)
+  | isBB         = balanceR B (h-1) (delete' kx (turnR l)) x (turnR r)
+  where
+    isBB = isBlackLeftBlack l
+    isBR = isBlackLeftRed r
+    Node B rh (Node R _ rll rlx rlr) rx rr = r
+deleteLT kx c h l x r = Node c h (delete' kx l) x r
+
+deleteGT :: Ord a => a -> Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+deleteGT kx c h (Node R _ ll lx lr) x r = balanceR c h ll lx (delete' kx (Node R h lr x r))
+deleteGT kx R h l x r
+  | isBB && isBR = Node R h (turnB ll) lx (balanceR B lh lr x (delete' kx (turnR r)))
+  | isBB         = balanceR B (h-1) (turnR l) x (delete' kx (turnR r))
+  where
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
+    Node B lh ll@(Node R _ _ _ _) lx lr = l
+deleteGT kx R h l x r = Node R h l x (delete' kx r)
+deleteGT _ _ _ _ _ _ = error "deleteGT"
+
+deleteEQ :: Ord a => a -> Color -> BlackHeight -> RBTree a -> a -> RBTree a -> RBTree a
+deleteEQ _ R _ Leaf _ Leaf = Leaf
+deleteEQ kx c h (Node R _ ll lx lr) x r = balanceR c h ll lx (delete' kx (Node R h lr x r))
+deleteEQ _ R h l _ r
+  | isBB && isBR = balanceR R h (turnB ll) lx (balanceR B lh lr m (deleteMin' (turnR r)))
+  | isBB         = balanceR B (h-1) (turnR l) m (deleteMin' (turnR r))
+  where
+    isBB = isBlackLeftBlack r
+    isBR = isBlackLeftRed l
+    Node B lh ll@(Node R _ _ _ _) lx lr = l
+    m = minimum r
+deleteEQ _ R h l _ r@(Node B rh rl rx rr) = Node R h l m (Node B rh (deleteMin' rl) rx rr) -- rl is Red
+  where
+    m = minimum r
+deleteEQ _ _ _ _ _ _ = error "deleteEQ"
 
 ----------------------------------------------------------------
 -- Set operations
@@ -507,14 +611,11 @@ mergeEQ Leaf Leaf = Leaf
 mergeEQ t1@(Node _ h l x r) t2
   | h == h2'  = Node R (h+1) t1 m t2'
   | isRed l   = Node R (h+1) (turnB l) x (Node B h r m t2')
-  -- unnecessary for LL
-  | isRed r   = Node B h (Node R h l x rl) rx (Node R h rr m t2')
   | otherwise = Node B h (turnR t1) m t2'
   where
     m  = minimum t2
     t2' = deleteMin t2
     h2' = height t2'
-    Node R _ rl rx rr = r
 mergeEQ _ _ = error "mergeEQ"
 
 ----------------------------------------------------------------
@@ -536,18 +637,9 @@ True
 split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
 split _ Leaf = (Leaf,Leaf)
 split kx (Node _ _ l x r) = case compare kx x of
-    LT -> (lt, join gt x (turnB' r)) where (lt,gt) = split kx l
-    GT -> (join (turnB' l) x lt, gt) where (lt,gt) = split kx r
-    EQ -> (turnB' l, turnB' r)
-
-{- LL
-split :: Ord a => a -> RBTree a -> (RBTree a, RBTree a)
-split _ Leaf = (Leaf,Leaf)
-split kx (Node _ _ l x r) = case compare kx x of
     LT -> (lt, join gt x r) where (lt,gt) = split kx l
     GT -> (join l x lt, gt) where (lt,gt) = split kx r
     EQ -> (turnB' l, r)
--}
 
 ----------------------------------------------------------------
 

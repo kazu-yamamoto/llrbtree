@@ -16,9 +16,11 @@ library
     GHC-Options:        -Wall -fno-warn-unused-do-bind
   else
     GHC-Options:        -Wall
-  Exposed-Modules:      Data.RBTree
-                        Data.RBTree.LL
-                        Data.WBTree
+  Exposed-Modules:      Data.Set.RBTree
+                        Data.Set.LLRBTree
+                        Data.Set.WBTree
+                        Data.Set.Splay
+                        Data.Heap.Skew
   Build-Depends:        base >= 4 && < 5
 
 Source-Repository head

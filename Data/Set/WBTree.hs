@@ -22,7 +22,7 @@
       <http://fox.ucw.cz/papers/bbtree/>
 -}
 
-module Data.WBTree (
+module Data.Set.WBTree (
   -- * Data structures
     WBTree(..)
   , Size

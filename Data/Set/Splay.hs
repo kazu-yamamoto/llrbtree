@@ -1,5 +1,5 @@
 {-|
-  Purely functional splay trees.
+  Purely functional splay sets.
 
    * <http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf>
 -}
@@ -7,7 +7,7 @@
 module Data.Set.Splay (
   -- * Data structures
     Splay(..)
-  -- * Creating red-black trees
+  -- * Creating sets
   , empty
   , singleton
   , insert
@@ -32,8 +32,8 @@ module Data.Set.Splay (
   , minimum
 --  , maximum
   , valid
-  , showTree
-  , printTree
+  , showSet
+  , printSet
   ) where
 
 import Data.List (foldl')
@@ -74,14 +74,14 @@ partition k x@(Node xl xk xr) = case compare k xk of
 
 ----------------------------------------------------------------
 
-{-| Empty tree.
+{-| Empty set.
 -}
 
 empty :: Splay a
 empty = Leaf
 
 {-|
-See if the splay tree is empty.
+See if the splay set is empty.
 
 >>> Data.Set.Splay.null empty
 True
@@ -93,7 +93,7 @@ null :: Splay a -> Bool
 null Leaf = True
 null _ = False
 
-{-| Singleton tree.
+{-| Singleton set.
 -}
 
 singleton :: a -> Splay a
@@ -118,7 +118,7 @@ insert x t = Node l x r
 
 ----------------------------------------------------------------
 
-{-| Creating a tree from a list.
+{-| Creating a set from a list.
 
 >>> empty == fromList []
 True
@@ -133,7 +133,7 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-{-| Creating a list from a tree. O(N)
+{-| Creating a list from a set. O(N)
 
 >>> toList (fromList [5,3])
 [3,5]
@@ -149,7 +149,7 @@ toList t = inorder t []
 
 ----------------------------------------------------------------
 
-{-| Checking if this element is a member of a tree?
+{-| Checking if this element is a member of a set?
 
 >>> fst $ member 5 (fromList [5,3])
 True
@@ -190,14 +190,14 @@ True
 -}
 
 deleteMin :: Splay a -> (a, Splay a)
-deleteMin Leaf = error "deleteMin"
-deleteMin (Node Leaf x r)            = (x,r)
+deleteMin Leaf                          = error "deleteMin"
+deleteMin (Node Leaf x r)               = (x,r)
 deleteMin (Node (Node Leaf lx lr) x r)  = (lx, Node lr x r)
-deleteMin (Node (Node ll lx lr) x r) = let (k,mt) = deleteMin ll
-                                 in (k, Node mt lx (Node lr x r))
+deleteMin (Node (Node ll lx lr) x r)    = let (k,mt) = deleteMin ll
+                                          in (k, Node mt lx (Node lr x r))
 
 ----------------------------------------------------------------
-{-| Creating a union tree from two trees.
+{-| Creating a union set from two sets.
 
 >>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
 True
@@ -213,7 +213,7 @@ union (Node a x b) t = Node (union ta a) x (union tb b)
 -- Basic operations
 ----------------------------------------------------------------
 
-{-| Checking validity of a tree.
+{-| Checking validity of a set.
 -}
 
 valid :: Ord a => Splay a -> Bool
@@ -227,19 +227,19 @@ isOrdered t = ordered $ toList t
     ordered (x:y:xys) = x < y && ordered (y:xys)
 
 
-showTree :: Show a => Splay a -> String
-showTree = showTree' ""
+showSet :: Show a => Splay a -> String
+showSet = showSet' ""
 
-showTree' :: Show a => String -> Splay a -> String
-showTree' _ Leaf = "\n"
-showTree' pref (Node l x r) = show x ++ "\n"
-                        ++ pref ++ "+ " ++ showTree' pref' l
-                        ++ pref ++ "+ " ++ showTree' pref' r
+showSet' :: Show a => String -> Splay a -> String
+showSet' _ Leaf = "\n"
+showSet' pref (Node l x r) = show x ++ "\n"
+                        ++ pref ++ "+ " ++ showSet' pref' l
+                        ++ pref ++ "+ " ++ showSet' pref' r
   where
     pref' = "  " ++ pref
 
-printTree :: Show a => Splay a -> IO ()
-printTree = putStr . showTree
+printSet :: Show a => Splay a -> IO ()
+printSet = putStr . showSet
 
 {-
 Demo: http://www.link.cs.cmu.edu/splay/

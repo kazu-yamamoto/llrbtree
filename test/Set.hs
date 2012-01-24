@@ -4,13 +4,13 @@ module Main where
 
 import qualified Data.List as L
 #if   METHOD == 1
-import Data.RBTree
+import Data.Set.RBTree
 #elif METHOD == 2
-import Data.RBTree.LL
+import Data.Set.LLRBTree
 #elif METHOD == 3
-import Data.WBTree
+import Data.Set.WBTree
 #else
-import Data.RBTree.LL
+import Data.Set.LLRBTree
 #endif
 
 import Test.Framework.TH.Prime
@@ -22,13 +22,13 @@ main = $(defaultMainGenerator)
 
 doc_test :: DocTests
 #if   METHOD == 1
-doc_test = docTest ["../Data/RBTree.hs"] ["-i.."]
+doc_test = docTest ["../Data/Set/RBTree.hs"] ["-i.."]
 #elif METHOD == 2
-doc_test = docTest ["../Data/RBTree/LL.hs"] ["-i.."]
+doc_test = docTest ["../Data/Set/LLRBTree.hs"] ["-i.."]
 #elif METHOD == 3
-doc_test = docTest ["../Data/WBTree.hs"] ["-i.."]
+doc_test = docTest ["../Data/Set/WBTree.hs"] ["-i.."]
 #else
-doc_test = docTest ["../Data/RBTree/LL.hs"] ["-i.."]
+doc_test = docTest ["../Data/Set/LLRBTree.hs"] ["-i.."]
 #endif
 
 prop_fromList :: [Int] -> Bool

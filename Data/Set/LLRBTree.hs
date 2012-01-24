@@ -81,9 +81,9 @@ height (Node _ h _ _ _) = h
 {-|
 See if the red black tree is empty.
 
->>> Data.RBTree.LL.null empty
+>>> Data.Set.LLRBTree.null empty
 True
->>> Data.RBTree.LL.null (singleton 1)
+>>> Data.Set.LLRBTree.null (singleton 1)
 False
 -}
 

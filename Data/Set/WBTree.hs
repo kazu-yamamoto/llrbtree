@@ -78,9 +78,9 @@ size (Node sz _ _ _) = sz
 {-|
 See if the red black tree is empty.
 
->>> Data.WBTree.null empty
+>>> Data.Set.WBTree.null empty
 True
->>> Data.WBTree.null (singleton 1)
+>>> Data.Set.WBTree.null (singleton 1)
 False
 -}
 

@@ -37,7 +37,7 @@ merge Leaf t2 = t2
 merge t1 t2
   | minimum t1 <= minimum t2 = join t1 t2
   | otherwise                = join t2 t1
-                               
+
 join :: Ord a => Tree a -> Tree a -> Tree a
 join (Node l x r) t = Node r x (merge l t)
 join _ _ = error "join"

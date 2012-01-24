@@ -9,14 +9,14 @@
       Technical Report CSTR 92-10, University of Southampton, 1992.
       <http://groups.csail.mit.edu/mac/users/adams/BB/>
 
-    * S. Adam, \"Efficient sets: a balancing act\", 
-      Journal of Functional Programming, Vol 3, Issue 4, pp 553-562. 
+    * S. Adam, \"Efficient sets: a balancing act\",
+      Journal of Functional Programming, Vol 3, Issue 4, pp 553-562.
 
     * Y. Hirai and K. Yamamoto,
       \"Balancing Weight-Balanced Trees\",
-      Journal of Functional Programming. Vol 21, Issue 03, pp 287-307. 
+      Journal of Functional Programming. Vol 21, Issue 03, pp 287-307.
       <http://mew.org/~kazu/proj/weight-balanced-tree/>
-    
+
     * M. Strake, \"Adams' Trees Revisited - Correct and Efficient Implementation\",
       TFP 2011.
       <http://fox.ucw.cz/papers/bbtree/>
@@ -27,7 +27,7 @@ module Data.Set.WBTree (
     WBTree(..)
   , Size
   , size
-  -- * Creating red-black trees
+  -- * Creating sets
   , empty
   , singleton
   , insert
@@ -76,7 +76,7 @@ size (Node sz _ _ _) = sz
 ----------------------------------------------------------------
 
 {-|
-See if the red black tree is empty.
+See if the set is empty.
 
 >>> Data.Set.WBTree.null empty
 True
@@ -89,7 +89,7 @@ null t = t == Leaf
 
 ----------------------------------------------------------------
 
-{-| Empty tree.
+{-| Empty set.
 
 >>> size empty
 0
@@ -98,7 +98,7 @@ null t = t == Leaf
 empty :: WBTree a
 empty = Leaf
 
-{-| Singleton tree.
+{-| Singleton set.
 
 >>> size (singleton 'a')
 1
@@ -131,7 +131,7 @@ insert k (Node sz l x r) = case compare k x of
     GT -> balanceL l x (insert k r)
     EQ -> Node sz l x r
 
-{-| Creating a tree from a list. O(N log N)
+{-| Creating a set from a list. O(N log N)
 
 >>> empty == fromList []
 True
@@ -146,7 +146,7 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-{-| Creating a list from a tree. O(N)
+{-| Creating a list from a set. O(N)
 
 >>> toList (fromList [5,3])
 [3,5]
@@ -162,7 +162,7 @@ toList t = inorder t []
 
 ----------------------------------------------------------------
 
-{-| Checking if this element is a member of a tree?
+{-| Checking if this element is a member of a set?
 
 >>> member 5 (fromList [5,3])
 True
@@ -247,7 +247,7 @@ deleteMax Leaf              = Leaf
 
 ----------------------------------------------------------------
 
-{-| Deleting this element from a tree. O(log N)
+{-| Deleting this element from a set. O(log N)
 
 >>> delete 5 (fromList [5,3]) == singleton 3
 True
@@ -267,7 +267,7 @@ delete k t = case t of
 
 ----------------------------------------------------------------
 
-{-| Checking validity of a tree.
+{-| Checking validity of a set.
 -}
 
 valid :: Ord a => WBTree a -> Bool
@@ -296,10 +296,10 @@ validsize t = realsize t == Just (size t)
 
 ----------------------------------------------------------------
 
-{-| Joining two trees with an element. O(log N)
+{-| Joining two sets with an element. O(log N)
 
-    Each element of the left tree must be less than the element.
-    Each element of the right tree must be greater than the element.
+    Each element of the left set must be less than the element.
+    Each element of the right set must be greater than the element.
 -}
 
 join :: Ord a => WBTree a -> a -> WBTree a -> WBTree a
@@ -313,10 +313,10 @@ join l@(Node _ ll lx lr) x r@(Node _ rl rx rr)
     bal1 = isBalanced l r
     bal2 = isBalanced r l
 
-{-| Merging two trees. O(log N)
+{-| Merging two sets. O(log N)
 
-    Each element of the left tree must be less than each element of
-    the right tree.
+    Each element of the left set must be less than each element of
+    the right set.
 -}
 
 merge :: WBTree a -> WBTree a -> WBTree a
@@ -337,7 +337,7 @@ glue l r
   | size l > size r = balanceL (deleteMax l) (maximum l) r
   | otherwise       = balanceR l (minimum r) (deleteMin r)
 
-{-| Splitting a tree. O(log N)
+{-| Splitting a set. O(log N)
 
 >>> split 2 (fromList [5,3]) == (empty, fromList [3,5])
 True
@@ -388,7 +388,7 @@ maximum _                 = error "maximum"
 
 ----------------------------------------------------------------
 
-{-| Creating a union tree from two trees. O(N + M)
+{-| Creating a union set from two sets. O(N + M)
 
 >>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
 True
@@ -401,7 +401,7 @@ union t1 (Node _ l x r) = join (union l' l) x (union r' r)
   where
     (l',r') = split x t1
 
-{-| Creating a intersection tree from trees. O(N + N)
+{-| Creating a intersection set from sets. O(N + N)
 
 >>> intersection (fromList [5,3]) (fromList [5,7]) == singleton 5
 True
@@ -416,7 +416,7 @@ intersection t1 (Node _ l x r)
   where
     (l',r') = split x t1
 
-{-| Creating a difference tree from trees. O(N + N)
+{-| Creating a difference set from sets. O(N + N)
 
 >>> difference (fromList [5,3]) (fromList [5,7]) == singleton 3
 True

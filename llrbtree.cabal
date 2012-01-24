@@ -21,6 +21,7 @@ library
                         Data.Set.WBTree
                         Data.Set.Splay
                         Data.Heap.Skew
+                        Data.Heap.Splay
   Build-Depends:        base >= 4 && < 5
 
 Source-Repository head

@@ -37,15 +37,9 @@ import Prelude hiding (minimum, maximum, null)
 data Heap a = None | Some a (Splay a) deriving Show
 
 instance (Eq a, Ord a) => Eq (Heap a) where
-    None == None             = True
-    None == Some _ _         = False
-    Some _ _ == None         = False
-    Some m1 t1 == Some m2 t2 = m1 == m2 && t1 == t2
+    h1 == h2 = heapSort h1 == heapSort h2
 
 data Splay a = Leaf | Node (Splay a) a (Splay a) deriving Show
-
-instance (Eq a, Ord a) => Eq (Splay a) where
-    t1 == t2 = heapSort' t1 == heapSort' t2
 
 ----------------------------------------------------------------
 
@@ -141,8 +135,9 @@ True
 []
 -}
 
-toList :: Splay a -> [a]
-toList t = inorder t []
+toList :: Heap a -> [a]
+toList None       = []
+toList (Some _ t) = inorder t []
   where
     inorder Leaf xs = xs
     inorder (Node l x r) xs = inorder l (x : inorder r xs)
@@ -174,26 +169,30 @@ True
 deleteMin :: Heap a -> Heap a
 deleteMin None       = None
 deleteMin (Some _ t) = case deleteMin' t of
-    (Nothing, _) -> None
-    (Just m, t') -> Some m t'
+    Nothing -> None
+    Just t'  -> case findMin' t' of
+        Nothing -> None
+        Just m  -> Some m t'
 
 deleteMin2 :: Heap a -> Maybe (a, Heap a)
 deleteMin2 None       = Nothing
-deleteMin2 (Some _ t) = case deleteMin' t of
-    (Nothing, _) -> Nothing
-    (Just m, t') -> Just (m, Some m t')
+deleteMin2 h = case minimum h of
+    Nothing -> Nothing
+    Just m  -> Just (m, deleteMin h)
 
-deleteMin' :: Splay a -> (Maybe a, Splay a)
-deleteMin' Leaf                          = (Nothing, Leaf)
-deleteMin' (Node Leaf x r)               = (Just x,r)
-deleteMin' (Node (Node Leaf lx lr) x r)  = (Just lx, Node lr x r)
-deleteMin' (Node (Node ll lx lr) x r)    = let (mk,mt) = deleteMin' ll
-                                           in (mk, Node mt lx (Node lr x r))
+-- deleteMin' and findMin' cannot be implemented together
 
-deleteMin2' :: Splay a -> Maybe (a, Splay a)
-deleteMin2' t = case deleteMin' t of
-    (Nothing, _) -> Nothing
-    (Just a, t') -> Just (a,t')
+deleteMin' :: Splay a -> Maybe (Splay a)
+deleteMin' Leaf                        = Nothing
+deleteMin' (Node Leaf _ r)             = Just r
+deleteMin' (Node (Node Leaf _ lr) x r) = Just (Node lr x r)
+deleteMin' (Node (Node ll lx lr) x r)  = let Just t = deleteMin' ll
+                                         in Just (Node t lx (Node lr x r))
+
+findMin' :: Splay a -> Maybe a
+findMin' Leaf            = Nothing
+findMin' (Node Leaf x _) = Just x
+findMin' (Node l _ _)    = findMin' l
 
 ----------------------------------------------------------------
 {-| Merging two heaps
@@ -228,9 +227,6 @@ valid t = isOrdered (heapSort t)
 
 heapSort :: Ord a => Heap a -> [a]
 heapSort t = unfoldr deleteMin2 t
-
-heapSort' :: Ord a => Splay a -> [a]
-heapSort' t = unfoldr deleteMin2' t
 
 isOrdered :: Ord a => [a] -> Bool
 isOrdered [] = True

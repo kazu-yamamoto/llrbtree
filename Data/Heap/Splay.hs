@@ -29,10 +29,10 @@ module Data.Heap.Splay (
   , printHeap
   ) where
 
-import Data.List (foldl', unfoldr)
-import Prelude hiding (minimum, maximum, null)
-import Data.Maybe
 import Control.Applicative hiding (empty)
+import Data.List (foldl', unfoldr)
+import Data.Maybe
+import Prelude hiding (minimum, maximum, null)
 
 ----------------------------------------------------------------
 
@@ -76,7 +76,7 @@ empty :: Heap a
 empty = None
 
 {-|
-See if the splay heap is empty.
+See if the heap is empty.
 
 >>> Data.Heap.Splay.null empty
 True

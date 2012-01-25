@@ -31,6 +31,8 @@ module Data.Heap.Splay (
 
 import Data.List (foldl', unfoldr)
 import Prelude hiding (minimum, maximum, null)
+import Data.Maybe
+import Control.Applicative hiding (empty)
 
 ----------------------------------------------------------------
 
@@ -168,17 +170,14 @@ True
 
 deleteMin :: Heap a -> Heap a
 deleteMin None       = None
-deleteMin (Some _ t) = case deleteMin' t of
-    Nothing -> None
-    Just t'  -> case findMin' t' of
-        Nothing -> None
-        Just m  -> Some m t'
+deleteMin (Some _ t) = fromMaybe None $ do
+    t' <- deleteMin' t
+    m  <- findMin' t'
+    return $ Some m t'
 
 deleteMin2 :: Heap a -> Maybe (a, Heap a)
 deleteMin2 None       = Nothing
-deleteMin2 h = case minimum h of
-    Nothing -> Nothing
-    Just m  -> Just (m, deleteMin h)
+deleteMin2 h = (\m -> (m, deleteMin h)) <$> minimum h
 
 -- deleteMin' and findMin' cannot be implemented together
 

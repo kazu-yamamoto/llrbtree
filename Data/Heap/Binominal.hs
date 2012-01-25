@@ -1,3 +1,9 @@
+{-|
+  Binominal Heap
+
+  - the fun of programming
+-}
+
 module Data.Heap.Binominal (
   -- * Data structures
     Heap(..)

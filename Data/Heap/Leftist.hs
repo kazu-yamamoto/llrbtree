@@ -1,12 +1,13 @@
 {-|
-  Skew Heap
+  Leftist Heap
 
   - the fun of programming
 -}
 
-module Data.Heap.Skew (
+module Data.Heap.Leftist (
   -- * Data structures
-    Skew(..)
+    Leftist(..)
+  , Rank
   -- * Creating heaps
   , empty
   , singleton
@@ -32,37 +33,45 @@ import Prelude hiding (minimum, maximum, null)
 
 ----------------------------------------------------------------
 
-data Skew a = Leaf | Node (Skew a) a (Skew a) deriving Show
+data Leftist a = Leaf | Node Rank (Leftist a) a (Leftist a) deriving Show
 
-instance (Eq a, Ord a) => Eq (Skew a) where
+instance (Eq a, Ord a) => Eq (Leftist a) where
     h1 == h2 = heapSort h1 == heapSort h2
+
+type Rank = Int
+
+----------------------------------------------------------------
+
+rank :: Leftist a -> Rank
+rank Leaf           = 0
+rank (Node v _ _ _) = v
 
 ----------------------------------------------------------------
 
 {-| Empty heap.
 -}
 
-empty :: Skew a
+empty :: Leftist a
 empty = Leaf
 
 {-|
 See if the heap is empty.
 
->>> Data.Heap.Skew.null empty
+>>> Data.Heap.Leftist.null empty
 True
->>> Data.Heap.Skew.null (singleton 1)
+>>> Data.Heap.Leftist.null (singleton 1)
 False
 -}
 
-null :: Skew t -> Bool
-null Leaf         = True
-null (Node _ _ _) = False
+null :: Leftist t -> Bool
+null Leaf           = True
+null (Node _ _ _ _) = False
 
 {-| Singleton heap.
 -}
 
-singleton :: a -> Skew a
-singleton x = Node Leaf x Leaf
+singleton :: a -> Leftist a
+singleton x = Node 1 Leaf x Leaf
 
 ----------------------------------------------------------------
 
@@ -74,7 +83,7 @@ True
 True
 -}
 
-insert :: Ord a => a -> Skew a -> Skew a
+insert :: Ord a => a -> Leftist a -> Leftist a
 insert x t = merge (singleton x) t
 
 ----------------------------------------------------------------
@@ -89,7 +98,7 @@ True
 True
 -}
 
-fromList :: Ord a => [a] -> Skew a
+fromList :: Ord a => [a] -> Leftist a
 fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
@@ -103,11 +112,11 @@ True
 []
 -}
 
-toList :: Skew a -> [a]
+toList :: Leftist a -> [a]
 toList t = inorder t []
   where
-    inorder Leaf xs         = xs
-    inorder (Node l x r) xs = inorder l (x : inorder r xs)
+    inorder Leaf xs           = xs
+    inorder (Node _ l x r) xs = inorder l (x : inorder r xs)
 
 ----------------------------------------------------------------
 
@@ -119,9 +128,9 @@ Just 1
 Nothing
 -}
 
-minimum :: Skew a -> Maybe a
-minimum Leaf         = Nothing
-minimum (Node _ x _) = Just x
+minimum :: Leftist a -> Maybe a
+minimum Leaf           = Nothing
+minimum (Node _ _ x _) = Just x
 
 ----------------------------------------------------------------
 
@@ -133,11 +142,11 @@ True
 True
 -}
 
-deleteMin :: Ord a => Skew a -> Skew a
-deleteMin Leaf         = Leaf
-deleteMin (Node l _ r) = merge l r
+deleteMin :: Ord a => Leftist a -> Leftist a
+deleteMin Leaf           = Leaf
+deleteMin (Node _ l _ r) = merge l r
 
-deleteMin2 :: Ord a => Skew a -> Maybe (a, Skew a)
+deleteMin2 :: Ord a => Leftist a -> Maybe (a, Leftist a)
 deleteMin2 Leaf = Nothing
 deleteMin2 h    = (\m -> (m, deleteMin h)) <$> minimum h
 
@@ -148,16 +157,17 @@ deleteMin2 h    = (\m -> (m, deleteMin h)) <$> minimum h
 True
 -}
 
-merge :: Ord a => Skew a -> Skew a -> Skew a
+merge :: Ord a => Leftist a -> Leftist a -> Leftist a
 merge t1 Leaf = t1
 merge Leaf t2 = t2
-merge t1 t2
-  | minimum t1 <= minimum t2 = join t1 t2
-  | otherwise                = join t2 t1
+merge t1@(Node _ l1 x1 r1) t2@(Node _ l2 x2 r2)
+  | x1 <= x2  = join l1 x1 (merge r1 t2)
+  | otherwise = join l2 x2 (merge t1 r2)
 
-join :: Ord a => Skew a -> Skew a -> Skew a
-join (Node l x r) t = Node r x (merge l t)
-join _ _ = error "join"
+join :: Ord a => Leftist a -> a -> Leftist a -> Leftist a
+join t1 x t2
+  | rank t1 >= rank t2 = Node (rank t2 + 1) t1 x t2
+  | otherwise          = Node (rank t1 + 1) t2 x t1
 
 ----------------------------------------------------------------
 -- Basic operations
@@ -166,10 +176,10 @@ join _ _ = error "join"
 {-| Checking validity of a heap.
 -}
 
-valid :: Ord a => Skew a -> Bool
+valid :: Ord a => Leftist a -> Bool
 valid t = isOrdered (heapSort t)
 
-heapSort :: Ord a => Skew a -> [a]
+heapSort :: Ord a => Leftist a -> [a]
 heapSort t = unfoldr deleteMin2 t
 
 isOrdered :: Ord a => [a] -> Bool

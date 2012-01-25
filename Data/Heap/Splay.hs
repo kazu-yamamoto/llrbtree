@@ -13,28 +13,39 @@ module Data.Heap.Splay (
   , singleton
   , insert
   , fromList
+  -- * Converting to a list
+  , toList
+  -- * Deleting
   , deleteMin
+  -- * Checking heaps
   , null
   -- * Helper functions
   , partition
   , merge
   , minimum
---  , valid
+  , valid
+  , heapSort
   , showHeap
   , printHeap
   ) where
 
-import Data.List (foldl')
+import Data.List (foldl', unfoldr)
 import Prelude hiding (minimum, maximum, null)
 
 ----------------------------------------------------------------
 
 data Heap a = None | Some a (Splay a) deriving Show
 
+instance (Eq a, Ord a) => Eq (Heap a) where
+    None == None             = True
+    None == Some _ _         = False
+    Some _ _ == None         = False
+    Some m1 t1 == Some m2 t2 = m1 == m2 && t1 == t2
+
 data Splay a = Leaf | Node (Splay a) a (Splay a) deriving Show
 
-instance (Eq a) => Eq (Splay a) where
-    t1 == t2 = toList t1 == toList t2
+instance (Eq a, Ord a) => Eq (Splay a) where
+    t1 == t2 = heapSort' t1 == heapSort' t2
 
 ----------------------------------------------------------------
 
@@ -91,8 +102,6 @@ singleton x = Some x (Node Leaf x Leaf)
 
 {-| Insertion.
 
->>> insert 5 (fromList [5,3]) == fromList [3,5]
-True
 >>> insert 7 (fromList [5,3]) == fromList [3,5,7]
 True
 >>> insert 5 empty            == singleton 5
@@ -114,7 +123,7 @@ insert x (Some m t) = Some m' $ Node l x r
 True
 >>> singleton 'a' == fromList ['a']
 True
->>> fromList [5,3,5] == fromList [5,3]
+>>> fromList [5,3] == fromList [5,3]
 True
 -}
 
@@ -125,8 +134,9 @@ fromList = foldl' (flip insert) empty
 
 {-| Creating a list from a heap. O(N)
 
->>> toList (fromList [5,3])
-[3,5]
+>>> let xs = [5,3,5]
+>>> length (toList (fromList xs)) == length xs
+True
 >>> toList empty
 []
 -}
@@ -141,55 +151,91 @@ toList t = inorder t []
 
 {-| Finding the minimum element.
 
->>> fst $ minimum (fromList [3,5,1])
-1
+>>> minimum (fromList [3,5,1])
+Just 1
 >>> minimum empty
-*** Exception: minimum
+Nothing
 -}
 
-minimum :: Heap a -> a
-minimum None       = error "minimum"
-minimum (Some m _) = m
+minimum :: Heap a -> Maybe a
+minimum None       = Nothing
+minimum (Some m _) = Just m
 
 ----------------------------------------------------------------
 
 {-| Deleting the minimum element.
 
->>> snd (deleteMin (fromList [5,3,7])) == fromList [5,7]
+>>> deleteMin (fromList [5,3,7]) == fromList [5,7]
 True
->>> deleteMin empty
-*** Exception: deleteMin
+>>> deleteMin empty == empty
+True
 -}
 
 deleteMin :: Heap a -> Heap a
-deleteMin None       = error "deleteMin"
+deleteMin None       = None
 deleteMin (Some _ t) = case deleteMin' t of
-    (_, Leaf) -> None
-    (m, t')   -> Some m t'
+    (Nothing, _) -> None
+    (Just m, t') -> Some m t'
 
-deleteMin' :: Splay a -> (a, Splay a)
-deleteMin' Leaf                          = error "deleteMin'"
-deleteMin' (Node Leaf x r)               = (x,r)
-deleteMin' (Node (Node Leaf lx lr) x r)  = (lx, Node lr x r)
-deleteMin' (Node (Node ll lx lr) x r)    = let (k,mt) = deleteMin' ll
-                                           in (k, Node mt lx (Node lr x r))
+deleteMin2 :: Heap a -> Maybe (a, Heap a)
+deleteMin2 None       = Nothing
+deleteMin2 (Some _ t) = case deleteMin' t of
+    (Nothing, _) -> Nothing
+    (Just m, t') -> Just (m, Some m t')
+
+deleteMin' :: Splay a -> (Maybe a, Splay a)
+deleteMin' Leaf                          = (Nothing, Leaf)
+deleteMin' (Node Leaf x r)               = (Just x,r)
+deleteMin' (Node (Node Leaf lx lr) x r)  = (Just lx, Node lr x r)
+deleteMin' (Node (Node ll lx lr) x r)    = let (mk,mt) = deleteMin' ll
+                                           in (mk, Node mt lx (Node lr x r))
+
+deleteMin2' :: Splay a -> Maybe (a, Splay a)
+deleteMin2' t = case deleteMin' t of
+    (Nothing, _) -> Nothing
+    (Just a, t') -> Just (a,t')
 
 ----------------------------------------------------------------
-{-| Creating a union heap from two heaps.
+{-| Merging two heaps
 
->>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
+>>> merge (fromList [5,3]) (fromList [5,7]) == fromList [3,5,5,7]
 True
 -}
 
-merge :: Ord a => Splay a -> Splay a -> Splay a
-merge Leaf t = t
-merge (Node a x b) t = Node (merge ta a) x (merge tb b)
+merge :: Ord a => Heap a -> Heap a -> Heap a
+merge None t = t
+merge t None = t
+merge (Some m1 t1) (Some m2 t2) = Some m t
+  where
+    m = min m1 m2
+    t = merge' t1 t2
+
+merge' :: Ord a => Splay a -> Splay a -> Splay a
+merge' Leaf t = t
+merge' (Node a x b) t = Node (merge' ta a) x (merge' tb b)
   where
     (ta,tb) = partition x t
 
 ----------------------------------------------------------------
 -- Basic operations
 ----------------------------------------------------------------
+
+{-| Checking validity of a heap.
+-}
+
+valid :: Ord a => Heap a -> Bool
+valid t = isOrdered (heapSort t)
+
+heapSort :: Ord a => Heap a -> [a]
+heapSort t = unfoldr deleteMin2 t
+
+heapSort' :: Ord a => Splay a -> [a]
+heapSort' t = unfoldr deleteMin2' t
+
+isOrdered :: Ord a => [a] -> Bool
+isOrdered [] = True
+isOrdered [_] = True
+isOrdered (x:y:xys) = x <= y && isOrdered (y:xys) -- allowing duplicated keys
 
 showHeap :: Show a => Splay a -> String
 showHeap = showHeap' ""

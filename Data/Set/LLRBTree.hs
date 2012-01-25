@@ -20,7 +20,7 @@ module Data.Set.LLRBTree (
   , insert
   , singleton
   , fromList
-  -- * Converting a list
+  -- * Converting to a list
   , toList
   -- * Membership
   , member

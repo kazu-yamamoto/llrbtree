@@ -19,7 +19,7 @@ module Data.Set.RBTree (
   , singleton
   , insert
   , fromList
-  -- * Converting a list
+  -- * Converting to a list
   , toList
   -- * Membership
   , member

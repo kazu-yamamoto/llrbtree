@@ -1,2 +1,2 @@
 clean:
-	rm -f *.o *.hi Set SplaySet
+	rm -f *.o *.hi Set SplaySet Heap

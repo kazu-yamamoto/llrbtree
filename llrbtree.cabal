@@ -26,6 +26,7 @@ library
                         Data.Set.LLRBTree
                         Data.Set.WBTree
                         Data.Set.Splay
+                        Data.Set.BUSplay
                         Data.Heap.Skew
                         Data.Heap.Leftist
                         Data.Heap.Splay

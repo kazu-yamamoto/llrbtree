@@ -3,7 +3,7 @@
 module Main where
 
 import qualified Data.List as L
-import Data.Set.Splay
+import Data.Set.BUSplay
 import Prelude hiding (minimum)
 
 import Test.Framework.TH.Prime
@@ -14,7 +14,7 @@ main :: IO ()
 main = $(defaultMainGenerator)
 
 doc_test :: DocTests
-doc_test = docTest ["../Data/Set/Splay.hs"] ["-i.."]
+doc_test = docTest ["../Data/Set/BUSplay.hs"] ["-i.."]
 
 prop_fromList :: [Int] -> Bool
 prop_fromList xs = valid $ fromList xs

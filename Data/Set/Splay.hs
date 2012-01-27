@@ -17,9 +17,9 @@ module Data.Set.Splay (
   -- * Membership
   , member
   -- * Deleting
---  , delete
+  , delete
   , deleteMin
---  , deleteMax
+  , deleteMax
   -- * Checking
   , null
   -- * Set operations
@@ -30,8 +30,9 @@ module Data.Set.Splay (
   , partition
 --  , merge
   , minimum
---  , maximum
+  , maximum
   , valid
+  , (===)
   , showSet
   , printSet
   ) where
@@ -45,6 +46,13 @@ data Splay a = Leaf | Node (Splay a) a (Splay a) deriving Show
 
 instance (Eq a) => Eq (Splay a) where
     t1 == t2 = toList t1 == toList t2
+
+{-| Checking if two splay sets are exactly the same shape.
+-}
+(===) :: Eq a => Splay a -> Splay a -> Bool
+Leaf            === Leaf            = True
+(Node l1 x1 r1) === (Node l2 x2 r2) = x1 == x2 && l1 === l2 && r1 === r2
+_               === _               = False
 
 ----------------------------------------------------------------
 
@@ -133,7 +141,7 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-{-| Creating a list from a set. O(N)
+{-| Creating a list from a set.
 
 >>> toList (fromList [5,3])
 [3,5]
@@ -179,6 +187,18 @@ minimum :: Splay a -> (a, Splay a)
 minimum Leaf = error "minimum"
 minimum t = let (x,mt) = deleteMin t in (x, Node Leaf x mt)
 
+{-| Finding the maximum element.
+
+>>> fst $ maximum (fromList [3,5,1])
+5
+>>> maximum empty
+*** Exception: maximum
+-}
+
+maximum :: Splay a -> (a, Splay a)
+maximum Leaf = error "maximum"
+maximum t = let (x,mt) = deleteMax t in (x, Node mt x Leaf)
+
 ----------------------------------------------------------------
 
 {-| Deleting the minimum element.
@@ -195,6 +215,39 @@ deleteMin (Node Leaf x r)               = (x,r)
 deleteMin (Node (Node Leaf lx lr) x r)  = (lx, Node lr x r)
 deleteMin (Node (Node ll lx lr) x r)    = let (k,mt) = deleteMin ll
                                           in (k, Node mt lx (Node lr x r))
+
+{-| Deleting the maximum
+
+>>> snd (deleteMax (fromList [(5,"a"), (3,"b"), (7,"c")])) == fromList [(3,"b"), (5,"a")]
+True
+>>> deleteMax empty
+*** Exception: deleteMax
+-}
+
+deleteMax :: Splay a -> (a, Splay a)
+deleteMax Leaf                          = error "deleteMax"
+deleteMax (Node l x Leaf)               = (x,l)
+deleteMax (Node l x (Node rl rx Leaf))  = (rx, Node l x rl)
+deleteMax (Node l x (Node rl rx rr))    = let (k,mt) = deleteMax rr
+                                          in (k, Node (Node l x rl) rx mt)
+
+----------------------------------------------------------------
+
+{-| Deleting this element from a set. O(log N)
+
+>>> delete 5 (fromList [5,3]) == singleton 3
+True
+>>> delete 7 (fromList [5,3]) == fromList [3,5]
+True
+>>> delete 5 empty            == empty
+True
+-}
+
+delete :: Ord a => a -> Splay a -> Splay a
+delete x t = case member x t of
+    (True, Leaf)       -> Leaf
+    (True, Node l _ r) -> union l r
+    (False, _)         -> t
 
 ----------------------------------------------------------------
 {-| Creating a union set from two sets.

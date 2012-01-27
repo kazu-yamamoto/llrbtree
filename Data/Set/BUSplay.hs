@@ -33,6 +33,7 @@ module Data.Set.BUSplay (
   , valid
   , showSet
   , printSet
+  , (===)
   ) where
 
 import Data.List (foldl')
@@ -45,9 +46,16 @@ data Splay a = Leaf | Node (Splay a) a (Splay a) deriving Show
 instance (Eq a) => Eq (Splay a) where
     t1 == t2 = toList t1 == toList t2
 
-data LRb a = L a (Splay a) | R a (Splay a) deriving Show
+{-| Checking if two splay sets are exactly the same shape.
+-}
+(===) :: Eq a => Splay a -> Splay a -> Bool
+Leaf            === Leaf            = True
+(Node l1 x1 r1) === (Node l2 x2 r2) = x1 == x2 && l1 === l2 && r1 === r2
+_               === _               = False
 
-type Path a = [LRb a]
+data Direction a = L a (Splay a) | R a (Splay a) deriving Show
+
+type Path a = [Direction a]
 
 search :: Ord a => a -> Splay a -> (Splay a, Path a)
 search k s = go s []

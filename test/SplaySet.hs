@@ -266,12 +266,23 @@ prop_unionModel xs ys = zs == zs'
     zs = L.nub $ L.sort $ L.union xs ys
     zs' = toList $ union (fromList xs) (fromList ys)
 
--- prop_merge :: [Int] -> Bool
--- prop_merge [] = True
--- prop_merge (x:xs) = valid $ merge (fromList ys) (fromList zs)
---   where
---     ys = filter (<x) xs
---     zs = filter (>x) xs
+prop_intersection :: [Int] -> [Int] -> Bool
+prop_intersection xs ys = valid $ intersection (fromList xs) (fromList ys)
+
+prop_intersectionModel :: [Int] -> [Int] -> Bool
+prop_intersectionModel xs ys = zs == zs'
+  where
+    zs = L.nub $ L.sort $ L.intersect xs ys
+    zs' = toList $ intersection (fromList xs) (fromList ys)
+
+prop_difference :: [Int] -> [Int] -> Bool
+prop_difference xs ys = valid $ difference (fromList xs) (fromList ys)
+
+prop_differenceModel :: [Int] -> [Int] -> Bool
+prop_differenceModel xs ys = zs == zs'
+  where
+    zs = L.sort $ L.nub xs L.\\ ys
+    zs' = toList $ difference (fromList xs) (fromList ys)
 
 prop_minimum :: [Int] -> Bool
 prop_minimum [] = True

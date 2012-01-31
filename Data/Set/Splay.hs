@@ -24,11 +24,10 @@ module Data.Set.Splay (
   , null
   -- * Set operations
   , union
---  , intersection
---  , difference
+  , intersection
+  , difference
   -- * Helper functions
   , partition
---  , merge
   , minimum
   , maximum
   , valid
@@ -233,7 +232,7 @@ deleteMax (Node l x (Node rl rx rr))    = let (k,mt) = deleteMax rr
 
 ----------------------------------------------------------------
 
-{-| Deleting this element from a set. O(log N)
+{-| Deleting this element from a set.
 
 >>> delete 5 (fromList [5,3]) == singleton 3
 True
@@ -244,10 +243,9 @@ True
 -}
 
 delete :: Ord a => a -> Splay a -> Splay a
-delete x t = case member x t of
-    (True, Leaf)       -> Leaf
-    (True, Node l _ r) -> union l r
-    (False, _)         -> t
+delete x t = case partition x t of
+    (l, True, r) -> union l r
+    _            -> t
 
 ----------------------------------------------------------------
 {-| Creating a union set from two sets.
@@ -261,6 +259,32 @@ union Leaf t = t
 union (Node a x b) t = Node (union ta a) x (union tb b)
   where
     (ta,_,tb) = partition x t
+
+{-| Creating a intersection set from sets.
+
+>>> intersection (fromList [5,3]) (fromList [5,7]) == singleton 5
+True
+-}
+
+intersection :: Ord a => Splay a -> Splay a -> Splay a
+intersection Leaf _          = Leaf
+intersection _ Leaf          = Leaf
+intersection t1 (Node l x r) = case partition x t1 of
+    (l', True,  r') -> Node (intersection l' l) x (intersection r' r)
+    (l', False, r') -> union (intersection l' l) (intersection r' r)
+
+{-| Creating a difference set from sets.
+
+>>> difference (fromList [5,3]) (fromList [5,7]) == singleton 3
+True
+-}
+
+difference :: Ord a => Splay a -> Splay a -> Splay a
+difference Leaf _          = Leaf
+difference t1 Leaf         = t1
+difference t1 (Node l x r) = union (difference l' l) (difference r' r)
+  where
+    (l',_,r') = partition x t1
 
 ----------------------------------------------------------------
 -- Basic operations

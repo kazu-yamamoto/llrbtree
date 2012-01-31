@@ -1,7 +1,11 @@
 {-|
-  Purely functional splay sets.
+  Purely functional top-down splay sets.
 
-   * <http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf>
+   * D.D. Sleator and R.E. Rarjan,
+     \"Self-Adjusting Binary Search Tree\",
+     Journal of the Association for Computing Machinery,
+     Vol 32, No 3, July 1985, pp 652-686.
+     <http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf>
 -}
 
 module Data.Set.Splay (
@@ -27,7 +31,7 @@ module Data.Set.Splay (
   , intersection
   , difference
   -- * Helper functions
-  , partition
+  , split
   , minimum
   , maximum
   , valid
@@ -58,25 +62,25 @@ _               === _               = False
 {-| Splitting smaller and bigger with splay.
     Since this is a set implementation, members must be unique.
 -}
-partition :: Ord a => a -> Splay a -> (Splay a, Bool, Splay a)
-partition _ Leaf = (Leaf,False,Leaf)
-partition k x@(Node xl xk xr) = case compare k xk of
+split :: Ord a => a -> Splay a -> (Splay a, Bool, Splay a)
+split _ Leaf = (Leaf,False,Leaf)
+split k x@(Node xl xk xr) = case compare k xk of
     EQ -> (xl, True, xr)
     GT -> case xr of
         Leaf -> (x, False, Leaf)
         Node yl yk yr -> case compare k yk of
             EQ ->     (Node xl xk yl, True, yr)           -- R  :zig
-            GT -> let (lt, b, gt) = partition k yr        -- RR :zig zag
+            GT -> let (lt, b, gt) = split k yr            -- RR :zig zag
                   in  (Node (Node xl xk yl) yk lt, b, gt)
-            LT -> let (lt, b, gt) = partition k yl
+            LT -> let (lt, b, gt) = split k yl
                   in  (Node xl xk lt, b, Node gt yk yr)   -- RL :zig zig
     LT -> case xl of
         Leaf          -> (Leaf, False, x)
         Node yl yk yr -> case compare k yk of
             EQ ->     (yl, True, Node yr xk xr)           -- L  :zig
-            GT -> let (lt, b, gt) = partition k yr        -- LR :zig zag
+            GT -> let (lt, b, gt) = split k yr            -- LR :zig zag
                   in  (Node yl yk lt, b, Node gt xk xr)
-            LT -> let (lt, b, gt) = partition k yl        -- LL :zig zig
+            LT -> let (lt, b, gt) = split k yl            -- LL :zig zig
                   in  (lt, b, Node gt yk (Node yr xk xr))
 
 ----------------------------------------------------------------
@@ -121,7 +125,7 @@ True
 insert :: Ord a => a -> Splay a -> Splay a
 insert x t = Node l x r
   where
-    (l,_,r) = partition x t
+    (l,_,r) = split x t
 
 ----------------------------------------------------------------
 
@@ -165,12 +169,9 @@ False
 -}
 
 member :: Ord a => a -> Splay a -> (Bool, Splay a)
-member x t = if b then
-                 (True, Node l x r)
-             else
-                 (False, t)
-  where
-    (l,b,r) = partition x t
+member x t = case split x t of
+    (l,True,r) -> (True, Node l x r)
+    _          -> (False, t) -- FIXME
 
 ----------------------------------------------------------------
 
@@ -243,11 +244,12 @@ True
 -}
 
 delete :: Ord a => a -> Splay a -> Splay a
-delete x t = case partition x t of
+delete x t = case split x t of
     (l, True, r) -> union l r
     _            -> t
 
 ----------------------------------------------------------------
+
 {-| Creating a union set from two sets.
 
 >>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
@@ -258,7 +260,7 @@ union :: Ord a => Splay a -> Splay a -> Splay a
 union Leaf t = t
 union (Node a x b) t = Node (union ta a) x (union tb b)
   where
-    (ta,_,tb) = partition x t
+    (ta,_,tb) = split x t
 
 {-| Creating a intersection set from sets.
 
@@ -269,7 +271,7 @@ True
 intersection :: Ord a => Splay a -> Splay a -> Splay a
 intersection Leaf _          = Leaf
 intersection _ Leaf          = Leaf
-intersection t1 (Node l x r) = case partition x t1 of
+intersection t1 (Node l x r) = case split x t1 of
     (l', True,  r') -> Node (intersection l' l) x (intersection r' r)
     (l', False, r') -> union (intersection l' l) (intersection r' r)
 
@@ -284,7 +286,7 @@ difference Leaf _          = Leaf
 difference t1 Leaf         = t1
 difference t1 (Node l x r) = union (difference l' l) (difference r' r)
   where
-    (l',_,r') = partition x t1
+    (l',_,r') = split x t1
 
 ----------------------------------------------------------------
 -- Basic operations

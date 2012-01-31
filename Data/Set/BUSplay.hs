@@ -1,7 +1,11 @@
 {-|
-  Purely functional splay sets.
+  Purely functional bottom-up splay sets.
 
-   * <http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf>
+   * D.D. Sleator and R.E. Rarjan,
+     \"Self-Adjusting Binary Search Tree\",
+     Journal of the Association for Computing Machinery,
+     Vol 32, No 3, July 1985, pp 652-686.
+     <http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf>
 -}
 
 module Data.Set.BUSplay (
@@ -17,23 +21,22 @@ module Data.Set.BUSplay (
   -- * Membership
   , member
   -- * Deleting
---  , delete
+  , delete
   , deleteMin
---  , deleteMax
+  , deleteMax
   -- * Checking
   , null
   -- * Set operations
   , union
---  , intersection
---  , difference
+  , intersection
+  , difference
   -- * Helper functions
---  , merge
   , minimum
---  , maximum
+  , maximum
   , valid
+  , (===)
   , showSet
   , printSet
-  , (===)
   ) where
 
 import Data.List (foldl')
@@ -57,6 +60,8 @@ data Direction a = L a (Splay a) | R a (Splay a) deriving Show
 
 type Path a = [Direction a]
 
+----------------------------------------------------------------
+
 search :: Ord a => a -> Splay a -> (Splay a, Path a)
 search k s = go s []
   where
@@ -65,6 +70,20 @@ search k s = go s []
         LT -> go l (L x r : bs)
         GT -> go r (R x l : bs)
         EQ -> (t,bs)
+
+searchMin :: Splay a -> (Splay a, Path a)
+searchMin s = go s []
+  where
+    go Leaf         bs = (Leaf, bs)
+    go (Node l x r) bs = go l (L x r : bs)
+
+searchMax :: Splay a -> (Splay a, Path a)
+searchMax s = go s []
+  where
+    go Leaf         bs = (Leaf, bs)
+    go (Node l x r) bs = go r (R x l : bs)
+
+----------------------------------------------------------------
 
 splay :: Splay a -> Path a -> Splay a
 splay t []                 = t
@@ -121,10 +140,9 @@ True
 -}
 
 insert :: Ord a => a -> Splay a -> Splay a
-insert x t = case search x t of
-    (Leaf, [])         -> singleton x
-    (Leaf, bs)         -> splay (singleton x) bs
-    (Node l _ r, bs)   -> splay (Node l x r) bs
+insert x t = Node l x r
+  where
+    (l,_,r) = split x t
 
 ----------------------------------------------------------------
 
@@ -167,11 +185,12 @@ True
 False
 -}
 
+-- this is 'access' in the paper
 member :: Ord a => a -> Splay a -> (Bool, Splay a)
 member x t = case search x t of
-    (Leaf, []) -> (False, singleton x)
-    (Leaf, bs) -> (False, splay (singleton x) bs)
-    (nd, bs)   -> (True,  splay nd bs)
+    (Leaf, []) -> (False, empty)
+    (Leaf, ps) -> (False, splay Leaf ps)
+    (s, ps)    -> (True,  splay s ps)
 
 ----------------------------------------------------------------
 
@@ -184,27 +203,76 @@ member x t = case search x t of
 -}
 
 minimum :: Splay a -> (a, Splay a)
-minimum Leaf = error "minimum"
-minimum t = let (x,mt) = deleteMin t in (x, Node Leaf x mt)
+minimum t = case uncurry splay $ searchMin t of
+    Leaf          -> error "minimum"
+    s@(Node _ x _) -> (x, s)
+
+{-| Finding the maximum element.
+
+>>> fst $ maximum (fromList [3,5,1])
+5
+>>> maximum empty
+*** Exception: maximum
+-}
+
+maximum :: Splay a -> (a, Splay a)
+maximum t = case uncurry splay $ searchMax t of
+    Leaf           -> error "maximum"
+    s@(Node _ x _) -> (x, s)
 
 ----------------------------------------------------------------
+-- FIXME: this is top down
 
 {-| Deleting the minimum element.
 
->>> snd (deleteMin (fromList [5,3,7])) == fromList [5,7]
+>>> deleteMin (fromList [5,3,7]) == fromList [5,7]
 True
 >>> deleteMin empty
 *** Exception: deleteMin
 -}
 
-deleteMin :: Splay a -> (a, Splay a)
-deleteMin Leaf                          = error "deleteMin"
-deleteMin (Node Leaf x r)               = (x,r)
-deleteMin (Node (Node Leaf lx lr) x r)  = (lx, Node lr x r)
-deleteMin (Node (Node ll lx lr) x r)    = let (k,mt) = deleteMin ll
-                                          in (k, Node mt lx (Node lr x r))
+deleteMin :: Splay a -> Splay a
+deleteMin Leaf = error "deleteMin"
+deleteMin t = case minimum t of
+    (_, Node Leaf _ r) -> r
+    _                  -> error "deleteMin"
+
+{-| Deleting the maximum
+
+>>> deleteMax (fromList [(5,"a"), (3,"b"), (7,"c")]) == fromList [(3,"b"), (5,"a")]
+True
+>>> deleteMax empty
+*** Exception: deleteMax
+-}
+
+deleteMax :: Splay a -> Splay a
+deleteMax Leaf = error "deleteMax"
+deleteMax t = case maximum t of
+    (_, Node l _ Leaf) -> l
+    _                  -> error "deleteMax"
+
 
 ----------------------------------------------------------------
+
+{-| Deleting this element from a set.
+
+>>> delete 5 (fromList [5,3]) == singleton 3
+True
+>>> delete 7 (fromList [5,3]) == fromList [3,5]
+True
+>>> delete 5 empty            == empty
+True
+-}
+
+delete :: Ord a => a -> Splay a -> Splay a
+delete _ Leaf = Leaf
+delete x t = case member x t of
+    (True,  Node l _ r) -> merge l r
+    (False, s)          -> s
+    _                   -> error "delete"
+
+----------------------------------------------------------------
+
 {-| Creating a union set from two sets.
 
 >>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
@@ -212,14 +280,58 @@ True
 -}
 
 union :: Ord a => Splay a -> Splay a -> Splay a
-union Leaf t = t
-union (Node a x b) t = Node (union ta a) x (union tb b)
+union t1 Leaf = t1
+union Leaf t2 = t2
+union t1 (Node l x r) = Node (union l' l) x (union r' r)
   where
-    (ta,_,tb) = undefined
+    (l',_,r') = split x t1
+
+{-| Creating a intersection set from sets.
+
+>>> intersection (fromList [5,3]) (fromList [5,7]) == singleton 5
+True
+-}
+
+intersection :: Ord a => Splay a -> Splay a -> Splay a
+intersection Leaf _ = Leaf
+intersection _ Leaf = Leaf
+intersection t1 (Node l x r) = case split x t1 of
+    (l', True,  r') -> Node (intersection l' l) x (intersection r' r)
+    (l', False, r') -> merge (intersection l' l) (intersection r' r)
+
+{-| Creating a difference set from sets.
+
+>>> difference (fromList [5,3]) (fromList [5,7]) == singleton 3
+True
+-}
+
+difference :: Ord a => Splay a -> Splay a -> Splay a
+difference Leaf _          = Leaf
+difference t1 Leaf         = t1
+difference t1 (Node l x r) = union (difference l' l) (difference r' r)
+  where
+    (l',_,r') = split x t1
 
 ----------------------------------------------------------------
 -- Basic operations
 ----------------------------------------------------------------
+
+merge :: Splay a -> Splay a -> Splay a
+merge Leaf t2 = t2
+merge t1 Leaf = t1
+merge t1 t2 = Node l x t2
+  where
+    (_, Node l x Leaf) = maximum t1
+
+split :: Ord a => a -> Splay a -> (Splay a, Bool, Splay a)
+split _ Leaf = (Leaf,False,Leaf)
+split x t    = case member x t of
+    (True,   Node l _ r) -> (l,True,r)
+    (False,  Node l y r) -> case compare x y of
+        LT -> (l, False, Node Leaf y r)
+        GT -> (Node l y Leaf, False, r)
+        EQ -> error "split"
+    _ -> error "split"
 
 {-| Checking validity of a set.
 -}
@@ -248,18 +360,3 @@ showSet' pref (Node l x r) = show x ++ "\n"
 
 printSet :: Show a => Splay a -> IO ()
 printSet = putStr . showSet
-
-{-
-Demo: http://www.link.cs.cmu.edu/splay/
-Paper: http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf
-TopDown: http://www.cs.umbc.edu/courses/undergraduate/341/fall02/Lectures/Splay/TopDownSplay.ppt
-Blog: http://chasen.org/~daiti-m/diary/?20061223
-      http://www.geocities.jp/m_hiroi/clisp/clispb07.html
-
-
-               fromList    minimum          delMin          member
-Blanced Tree   N log N     log N            log N           log N
-Skew Heap      N log N     1                log N(???)      N/A
-Splay Heap     N           log N or A(N)?   log N or A(N)?  log N or A(N)?
-
--}

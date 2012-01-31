@@ -230,14 +230,22 @@ prop_deleteMin [] = True
 prop_deleteMin xs = valid t'
   where
     t = fromList xs
+#if METHOD == 1
+    t' = deleteMin t
+#else
     (_, t') = deleteMin t
+#endif
 
 prop_deleteMin2 :: [Int] -> Bool
 prop_deleteMin2 [] = True
 prop_deleteMin2 xs = ys == zs
   where
     t = fromList xs
-    (_,t') = deleteMin t
+#if METHOD == 1
+    t' = deleteMin t
+#else
+    (_, t') = deleteMin t
+#endif
     ys = toList t'
     zs = tail . L.nub . L.sort $ xs
 
@@ -246,14 +254,22 @@ prop_deleteMax [] = True
 prop_deleteMax xs = valid t'
   where
     t = fromList xs
+#if METHOD == 1
+    t' = deleteMax t
+#else
     (_, t') = deleteMax t
+#endif
 
 prop_deleteMax2 :: [Int] -> Bool
 prop_deleteMax2 [] = True
 prop_deleteMax2 xs = ys == zs
   where
     t = fromList xs
+#if METHOD == 1
+    t' = deleteMax t
+#else
     (_, t') = deleteMax t
+#endif
     ys = reverse . toList $ t'
     zs = tail . L.nub . L.sortBy (flip compare) $ xs
 

@@ -1,7 +1,11 @@
 {-|
-  Purely functional splay heaps.
+  Purely functional top-down splay heaps.
 
-   * <http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf>
+   * D.D. Sleator and R.E. Rarjan,
+     \"Self-Adjusting Binary Search Tree\",
+     Journal of the Association for Computing Machinery,
+     Vol 32, No 3, July 1985, pp 652-686.
+     <http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf>
 -}
 
 module Data.Heap.Splay (
@@ -51,21 +55,21 @@ data Splay a = Leaf | Node (Splay a) a (Splay a) deriving Show
 -}
 partition :: Ord a => a -> Splay a -> (Splay a, Splay a)
 partition _ Leaf = (Leaf, Leaf)
-partition k x@(Node xl xk xr)
-  | k >= xk = case xr of
-      Leaf -> (x, Leaf)
-      Node yl yk yr
-        | k >= yk   -> let (lt, gt) = partition k yr        -- RR :zig zag
-                       in  (Node (Node xl xk yl) yk lt, gt)
-        | otherwise -> let (lt, gt) = partition k yl
-                       in  (Node xl xk lt, Node gt yk yr)   -- RL :zig zig
-  | otherwise = case xl of
+partition k x@(Node xl xk xr) = case compare k xk of
+    LT -> case xl of
       Leaf          -> (Leaf, x)
-      Node yl yk yr
-        | k >= yk   -> let (lt, gt) = partition k yr        -- LR :zig zag
-                       in  (Node yl yk lt, Node gt xk xr)
-        | otherwise -> let (lt, gt) = partition k yl        -- LL :zig zig
-                       in  (lt, Node gt yk (Node yr xk xr))
+      Node yl yk yr -> case compare k yk of
+          LT -> let (lt, gt) = partition k yl        -- LL :zig zig
+                in  (lt, Node gt yk (Node yr xk xr))
+          _  -> let (lt, gt) = partition k yr        -- LR :zig zag
+                in  (Node yl yk lt, Node gt xk xr)
+    _ -> case xr of
+      Leaf          -> (x, Leaf)
+      Node yl yk yr -> case compare k yk of
+          LT -> let (lt, gt) = partition k yl
+                in  (Node xl xk lt, Node gt yk yr)   -- RL :zig zig
+          _  -> let (lt, gt) = partition k yr        -- RR :zig zag
+                in  (Node (Node xl xk yl) yk lt, gt)
 
 ----------------------------------------------------------------
 
@@ -108,7 +112,7 @@ insert :: Ord a => a -> Heap a -> Heap a
 insert x None = singleton x
 insert x (Some m t) = Some m' $ Node l x r
   where
-    m' = if x < m then x else m -- xxx
+    m' = min x m
     (l,r) = partition x t
 
 ----------------------------------------------------------------

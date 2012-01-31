@@ -40,8 +40,8 @@ module Data.Set.RBTree (
   , minimum
   , maximum
   , valid
-  , showTree
-  , printTree
+  , showSet
+  , printSet
   ) where
 
 import Data.List (foldl')
@@ -248,19 +248,19 @@ maximum _                   = error "maximum"
 
 ----------------------------------------------------------------
 
-showTree :: Show a => RBTree a -> String
-showTree = showTree' ""
+showSet :: Show a => RBTree a -> String
+showSet = showSet' ""
 
-showTree' :: Show a => String -> RBTree a -> String
-showTree' _ Leaf = "\n"
-showTree' pref (Node k h l x r) = show k ++ " " ++ show x ++ " (" ++ show h ++ ")\n"
-                               ++ pref ++ "+ " ++ showTree' pref' l
-                               ++ pref ++ "+ " ++ showTree' pref' r
+showSet' :: Show a => String -> RBTree a -> String
+showSet' _ Leaf = "\n"
+showSet' pref (Node k h l x r) = show k ++ " " ++ show x ++ " (" ++ show h ++ ")\n"
+                              ++ pref ++ "+ " ++ showSet' pref' l
+                              ++ pref ++ "+ " ++ showSet' pref' r
   where
     pref' = "  " ++ pref
 
-printTree :: Show a => RBTree a -> IO ()
-printTree = putStr . showTree
+printSet :: Show a => RBTree a -> IO ()
+printSet = putStr . showSet
 
 ----------------------------------------------------------------
 

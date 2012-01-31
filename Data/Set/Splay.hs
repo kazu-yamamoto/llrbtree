@@ -171,7 +171,10 @@ False
 member :: Ord a => a -> Splay a -> (Bool, Splay a)
 member x t = case split x t of
     (l,True,r) -> (True, Node l x r)
-    _          -> (False, t) -- FIXME
+    (Leaf,_,r) -> (False, r)
+    (l,_,Leaf) -> (False, l)
+    (l,_,r)    -> let (m,l') = deleteMax l
+                  in (False, Node l' m r)
 
 ----------------------------------------------------------------
 

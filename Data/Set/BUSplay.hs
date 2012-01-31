@@ -221,7 +221,6 @@ maximum t = case uncurry splay $ searchMax t of
     s@(Node _ x _) -> (x, s)
 
 ----------------------------------------------------------------
--- FIXME: this is top down
 
 {-| Deleting the minimum element.
 

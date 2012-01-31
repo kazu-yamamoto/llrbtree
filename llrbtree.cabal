@@ -4,7 +4,7 @@ Author:                 Kazu Yamamoto <kazu@iij.ad.jp>
 Maintainer:             Kazu Yamamoto <kazu@iij.ad.jp>
 License:                BSD3
 License-File:           LICENSE
-Synopsis:               Purely functional data structure
+Synopsis:               Purely functional sets and heaps
 Description:            Purely functional data structure including
                         red-black trees,
                         left-leaning red-black trees,

@@ -42,10 +42,15 @@ prop_toList xs = ordered ys
     ordered _         = True
 
 prop_member :: [Int] -> Bool
-prop_member [] = True
-prop_member (x:xs) = member x t
+prop_member []        = member (1::Int) (fromList []) == False
+prop_member xxs@(x:_) = member x t
   where
-    t = fromList (x:xs)
+    t = fromList xxs
+
+prop_memberModel :: Int -> [Int] -> Bool
+prop_memberModel x xs = member x t == elem x xs
+  where
+    t = fromList xs
 
 prop_delete :: [Int] -> Bool
 prop_delete [] = True

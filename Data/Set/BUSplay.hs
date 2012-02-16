@@ -56,9 +56,11 @@ Leaf            === Leaf            = True
 (Node l1 x1 r1) === (Node l2 x2 r2) = x1 == x2 && l1 === l2 && r1 === r2
 _               === _               = False
 
-data Direction a = L a (Splay a) | R a (Splay a) deriving Show
+data Direction a = L a (Splay a) | R (Splay a) a deriving Show
 
 type Path a = [Direction a]
+
+-- data Context a = L (Context a) a (Splay a) | R (Splay a) a (Context a) | Stop
 
 ----------------------------------------------------------------
 
@@ -68,7 +70,7 @@ search k s = go s []
     go Leaf           bs = (Leaf, bs)
     go t@(Node l x r) bs = case compare k x of
         LT -> go l (L x r : bs)
-        GT -> go r (R x l : bs)
+        GT -> go r (R l x : bs)
         EQ -> (t,bs)
 
 searchMin :: Splay a -> (Splay a, Path a)
@@ -81,23 +83,23 @@ searchMax :: Splay a -> (Splay a, Path a)
 searchMax s = go s []
   where
     go Leaf         bs = (Leaf, bs)
-    go (Node l x r) bs = go r (R x l : bs)
+    go (Node l x r) bs = go r (R l x : bs)
 
 ----------------------------------------------------------------
 
 splay :: Splay a -> Path a -> Splay a
 splay t []                 = t
 splay Leaf (L x r : bs)    = splay (Node Leaf x r) bs
-splay Leaf (R x l : bs)    = splay (Node l x Leaf) bs
+splay Leaf (R l x : bs)    = splay (Node l x Leaf) bs
 splay (Node a x b) [L y c] = Node a x (Node b y c) -- zig
-splay (Node b y c) [R x a] = Node (Node a x b) y c -- zig
+splay (Node b y c) [R a x] = Node (Node a x b) y c -- zig
 splay (Node a x b) (L y c : L z d : bs)
     = splay (Node a x (Node b y (Node c z d))) bs  -- zig zig
-splay (Node b x c) (R y a : L z d : bs)
+splay (Node b x c) (R a y : L z d : bs)
     = splay (Node (Node a y b) x (Node c z d)) bs  -- zig zag
-splay (Node c z d) (R y b : R x a : bs)
+splay (Node c z d) (R b y : R a x : bs)
     = splay (Node (Node (Node a x b) y c) z d) bs  -- zig zig
-splay (Node b x c) (L y d : R z a : bs)
+splay (Node b x c) (L y d : R a z : bs)
     = splay (Node (Node a z b) x (Node c y d)) bs  -- zig zag
 
 ----------------------------------------------------------------

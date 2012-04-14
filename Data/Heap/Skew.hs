@@ -46,7 +46,7 @@ empty :: Skew a
 empty = Leaf
 
 {-|
-See if the heap is empty.
+See if the heap is empty. O(1).
 
 >>> Data.Heap.Skew.null empty
 True
@@ -111,7 +111,7 @@ toList t = inorder t []
 
 ----------------------------------------------------------------
 
-{-| Finding the minimum element.
+{-| Finding the minimum element. O(1).
 
 >>> minimum (fromList [3,5,1])
 Just 1

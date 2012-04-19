@@ -1,7 +1,9 @@
 {-|
-  Skew Heap
+  Skew Heap:
 
   - the fun of programming
+
+  A(f) denotes O(f) amortized time.
 -}
 
 module Data.Heap.Skew (

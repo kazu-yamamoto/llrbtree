@@ -14,7 +14,7 @@ import Data.Set.LLRBTree
 #endif
 
 import Test.Framework.TH.Prime
-import Test.Framework.Providers.DocTest
+import Test.Framework.Providers.DocTest.Prime
 import Test.Framework.Providers.QuickCheck2
 
 main :: IO ()

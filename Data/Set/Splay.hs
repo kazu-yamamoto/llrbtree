@@ -42,6 +42,8 @@ module Data.Set.Splay (
 
 import Data.List (foldl')
 import Prelude hiding (minimum, maximum, null)
+import qualified Prelude as P (null)
+import qualified Data.List as L
 
 ----------------------------------------------------------------
 
@@ -98,6 +100,8 @@ See if the splay set is empty.
 True
 >>> Data.Set.Splay.null (singleton 1)
 False
+
+prop> some is' ==> valid . snd . deleteMax . fromList $ is'
 -}
 
 null :: Splay a -> Bool
@@ -114,12 +118,10 @@ singleton x = Node Leaf x Leaf
 
 {-| Insertion.
 
->>> insert 5 (fromList [5,3]) == fromList [3,5]
-True
->>> insert 7 (fromList [5,3]) == fromList [3,5,7]
-True
->>> insert 5 empty            == singleton 5
-True
+prop> insert 5 (fromList [5,3]) == fromList [3,5]
+prop> insert 7 (fromList [5,3]) == fromList [3,5,7]
+prop> insert 5 empty            == singleton 5
+prop> fst . member i . insert i . fromList $ is
 -}
 
 insert :: Ord a => a -> Splay a -> Splay a
@@ -131,12 +133,10 @@ insert x t = Node l x r
 
 {-| Creating a set from a list.
 
->>> empty == fromList []
-True
->>> singleton 'a' == fromList ['a']
-True
->>> fromList [5,3,5] == fromList [5,3]
-True
+prop> empty == fromList []
+prop> singleton 'a' == fromList ['a']
+prop> fromList [5,3,5] == fromList [5,3]
+prop> valid $ fromList is
 -}
 
 fromList :: Ord a => [a] -> Splay a
@@ -150,6 +150,8 @@ fromList = foldl' (flip insert) empty
 [3,5]
 >>> toList empty
 []
+
+prop> ordered . toList . fromList $ is
 -}
 
 toList :: Splay a -> [a]
@@ -166,6 +168,8 @@ toList t = inorder t []
 True
 >>> fst $ member 1 (fromList [5,3])
 False
+
+prop> some is ==> fst . member (head is) . fromList $ is
 -}
 
 member :: Ord a => a -> Splay a -> (Bool, Splay a)
@@ -184,6 +188,8 @@ member x t = case split x t of
 1
 >>> minimum empty
 *** Exception: minimum
+
+prop> some is ==> let m = L.minimum is; t = snd $ member m (fromList is) in minimum t == (m, t)
 -}
 
 minimum :: Splay a -> (a, Splay a)
@@ -196,6 +202,8 @@ minimum t = let (x,mt) = deleteMin t in (x, Node Leaf x mt)
 5
 >>> maximum empty
 *** Exception: maximum
+
+prop> some is ==> let m = L.maximum is; t = snd $ member m (fromList is) in maximum t == (m, t)
 -}
 
 maximum :: Splay a -> (a, Splay a)
@@ -210,6 +218,9 @@ maximum t = let (x,mt) = deleteMax t in (x, Node mt x Leaf)
 True
 >>> deleteMin empty
 *** Exception: deleteMin
+
+prop> some is ==> valid . snd . deleteMin . fromList $ is
+prop> prop_deleteMinModel
 -}
 
 deleteMin :: Splay a -> (a, Splay a)
@@ -219,12 +230,24 @@ deleteMin (Node (Node Leaf lx lr) x r)  = (lx, Node lr x r)
 deleteMin (Node (Node ll lx lr) x r)    = let (k,mt) = deleteMin ll
                                           in (k, Node mt lx (Node lr x r))
 
+prop_deleteMinModel :: [Int] -> Bool
+prop_deleteMinModel [] = True
+prop_deleteMinModel xs = ys == zs
+  where
+    t = fromList xs
+    (_, t') = deleteMin t
+    ys = toList t'
+    zs = tail . L.nub . L.sort $ xs
+
 {-| Deleting the maximum
 
 >>> snd (deleteMax (fromList [(5,"a"), (3,"b"), (7,"c")])) == fromList [(3,"b"), (5,"a")]
 True
 >>> deleteMax empty
 *** Exception: deleteMax
+
+prop> \(is::[Int]) -> some is ==> valid . snd . deleteMax . fromList $ is
+prop> prop_deleteMaxModel
 -}
 
 deleteMax :: Splay a -> (a, Splay a)
@@ -233,6 +256,15 @@ deleteMax (Node l x Leaf)               = (x,l)
 deleteMax (Node l x (Node rl rx Leaf))  = (rx, Node l x rl)
 deleteMax (Node l x (Node rl rx rr))    = let (k,mt) = deleteMax rr
                                           in (k, Node (Node l x rl) rx mt)
+
+prop_deleteMaxModel :: [Int] -> Bool
+prop_deleteMaxModel [] = True
+prop_deleteMaxModel xs = ys == zs
+  where
+    t = fromList xs
+    (_, t') = deleteMax t
+    ys = reverse . toList $ t'
+    zs = tail . L.nub . L.sortBy (flip compare) $ xs
 
 ----------------------------------------------------------------
 
@@ -244,6 +276,12 @@ True
 True
 >>> delete 5 empty            == empty
 True
+
+prop> some is ==> let n = length is `div` 2; t = fromList is in valid $ delete (is !! n) t -- delete middle
+prop> some is ==> valid (delete (head is) (fromList is)) -- delete root
+prop> some is ==> valid $ delete (last is) (fromList is) -- delete leaf
+prop> some is ==> valid $ delete x (fromList is) -- delete non-member
+prop> prop_deleteModel
 -}
 
 delete :: Ord a => a -> Splay a -> Splay a
@@ -251,12 +289,24 @@ delete x t = case split x t of
     (l, True, r) -> union l r
     _            -> t
 
+prop_deleteModel :: [Int] -> Bool
+prop_deleteModel [] = True
+prop_deleteModel xxs@(x:xs) = ys == zs
+  where
+    t = fromList xxs
+    t' = delete x t
+    ys = toList t'
+    zs = L.delete x . L.nub . L.sort $ xs
+
 ----------------------------------------------------------------
 
 {-| Creating a union set from two sets.
 
 >>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
 True
+
+prop> valid $ union (fromList is1) (fromList is2)
+prop> let xs = L.nub $ L.sort $ L.union is1 is2; ys = toList $ union (fromList is1) (fromList is2) in xs == ys
 -}
 
 union :: Ord a => Splay a -> Splay a -> Splay a
@@ -269,6 +319,9 @@ union (Node a x b) t = Node (union ta a) x (union tb b)
 
 >>> intersection (fromList [5,3]) (fromList [5,7]) == singleton 5
 True
+
+prop> valid $ intersection (fromList is1) (fromList is2)
+prop> let xs = L.nub $ L.sort $ L.intersect is1 is2; ys = toList $ intersection (fromList is1) (fromList is2) in xs == ys
 -}
 
 intersection :: Ord a => Splay a -> Splay a -> Splay a
@@ -282,6 +335,9 @@ intersection t1 (Node l x r) = case split x t1 of
 
 >>> difference (fromList [5,3]) (fromList [5,7]) == singleton 3
 True
+
+prop> valid $ difference (fromList is1) (fromList is2)
+prop> let xs = L.sort $ L.nub is1 L.\\ is2; ys = toList $ difference (fromList is1) (fromList is2) in xs == ys
 -}
 
 difference :: Ord a => Splay a -> Splay a -> Splay a
@@ -303,11 +359,6 @@ valid t = isOrdered t
 
 isOrdered :: Ord a => Splay a -> Bool
 isOrdered t = ordered $ toList t
-  where
-    ordered [] = True
-    ordered [_] = True
-    ordered (x:y:xys) = x < y && ordered (y:xys)
-
 
 showSet :: Show a => Splay a -> String
 showSet = showSet' ""
@@ -337,3 +388,12 @@ Skew Heap      N log N     1                log N(???)      N/A
 Splay Heap     N           log N or A(N)?   log N or A(N)?  log N or A(N)?
 
 -}
+
+----------------------------------------------------------------
+
+some :: [a] -> Bool
+some = not . P.null
+
+ordered :: Ord a => [a] -> Bool
+ordered (x:y:xys) = x <= y && ordered (y:xys)
+ordered _         = True

@@ -103,7 +103,7 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-{-| Creating a list from a heap. O(N)
+{-| Creating a list from a heap. Worst case: O(N)
 
 >>> let xs = [5,3,5]
 >>> length (toList (fromList xs)) == length xs

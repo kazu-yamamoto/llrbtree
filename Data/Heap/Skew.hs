@@ -2,8 +2,6 @@
   Skew Heap:
 
   - the fun of programming
-
-  A(f) denotes O(f) amortized time.
 -}
 
 module Data.Heap.Skew (
@@ -48,7 +46,7 @@ empty :: Skew a
 empty = Leaf
 
 {-|
-See if the heap is empty. O(1).
+See if the heap is empty. Worst-case: O(1).
 
 >>> Data.Heap.Skew.null empty
 True
@@ -68,7 +66,7 @@ singleton x = Node Leaf x Leaf
 
 ----------------------------------------------------------------
 
-{-| Insertion. O(N)/A(log N).
+{-| Insertion. Worst-case: O(N), amortized time: O(log N).
 
 >>> insert 7 (fromList [5,3]) == fromList [3,5,7]
 True
@@ -96,7 +94,7 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-{-| Creating a list from a heap. O(N)
+{-| Creating a list from a heap. Worst-case: O(N)
 
 >>> let xs = [5,3,5]
 >>> length (toList (fromList xs)) == length xs
@@ -113,7 +111,7 @@ toList t = inorder t []
 
 ----------------------------------------------------------------
 
-{-| Finding the minimum element. O(1).
+{-| Finding the minimum element. Worst-case: O(1).
 
 >>> minimum (fromList [3,5,1])
 Just 1
@@ -127,7 +125,7 @@ minimum (Node _ x _) = Just x
 
 ----------------------------------------------------------------
 
-{-| Deleting the minimum element. O(N)/A(log N).
+{-| Deleting the minimum element. Worst-case: O(N), amortized time: O(log N).
 
 >>> deleteMin (fromList [5,3,7]) == fromList [5,7]
 True
@@ -144,7 +142,7 @@ deleteMin2 Leaf = Nothing
 deleteMin2 h    = (\m -> (m, deleteMin h)) <$> minimum h
 
 ----------------------------------------------------------------
-{-| Merging two heaps. O(N)/A(log N).
+{-| Merging two heaps. Worst-case: O(N), amortized time: O(log N).
 
 >>> merge (fromList [5,3]) (fromList [5,7]) == fromList [3,5,5,7]
 True

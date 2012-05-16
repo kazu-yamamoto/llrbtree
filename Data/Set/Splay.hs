@@ -184,12 +184,12 @@ member x t = case split x t of
 
 {-| Finding the minimum element.
 
->>> fst $ minimum (fromList [3,5,1])
+>>> fst $ Data.Set.Splay.minimum (fromList [3,5,1])
 1
->>> minimum empty
+>>> Data.Set.Splay.minimum empty
 *** Exception: minimum
 
-prop> some is ==> let m = L.minimum is; t = snd $ member m (fromList is) in minimum t == (m, t)
+prop> some is ==> let m = L.minimum is; t = snd $ member m (fromList is) in Data.Set.Splay.minimum t == (m, t)
 -}
 
 minimum :: Splay a -> (a, Splay a)
@@ -198,12 +198,12 @@ minimum t = let (x,mt) = deleteMin t in (x, Node Leaf x mt)
 
 {-| Finding the maximum element.
 
->>> fst $ maximum (fromList [3,5,1])
+>>> fst $ Data.Set.Splay.maximum (fromList [3,5,1])
 5
->>> maximum empty
+>>> Data.Set.Splay.maximum empty
 *** Exception: maximum
 
-prop> some is ==> let m = L.maximum is; t = snd $ member m (fromList is) in maximum t == (m, t)
+prop> some is ==> let m = L.maximum is; t = snd $ member m (fromList is) in Data.Set.Splay.maximum t == (m, t)
 -}
 
 maximum :: Splay a -> (a, Splay a)
@@ -246,7 +246,7 @@ True
 >>> deleteMax empty
 *** Exception: deleteMax
 
-prop> \(is::[Int]) -> some is ==> valid . snd . deleteMax . fromList $ is
+prop> some is ==> valid . snd . deleteMax . fromList $ (is :: [Int])
 prop> prop_deleteMaxModel
 -}
 
@@ -277,10 +277,21 @@ True
 >>> delete 5 empty            == empty
 True
 
-prop> some is ==> let n = length is `div` 2; t = fromList is in valid $ delete (is !! n) t -- delete middle
-prop> some is ==> valid (delete (head is) (fromList is)) -- delete root
-prop> some is ==> valid $ delete (last is) (fromList is) -- delete leaf
-prop> some is ==> valid $ delete x (fromList is) -- delete non-member
+Deleting a middle must keep tree-balance.
+
+prop> some is ==> let n = length is `div` 2; t = fromList is in valid $ delete (is !! n) t
+
+Deleting the root must keep tree-balance.
+
+prop> some is ==> valid (delete (head is) (fromList is))
+
+Deleting a leaf must keep tree-balance.
+
+prop> some is ==> valid $ delete (last is) (fromList is)
+
+Deleting a non element must keep tree-balance.
+
+prop> some is ==> valid $ delete x (fromList is)
 prop> prop_deleteModel
 -}
 

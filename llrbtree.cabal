@@ -15,9 +15,10 @@ Description:            Purely functional data structure including
                         splay heaps,
                         and binominal heaps.
 Category:               Data
-Cabal-Version:          >= 1.6
+Cabal-Version:          >= 1.8
 Build-Type:             Simple
-library
+
+Library
   if impl(ghc >= 6.12)
     GHC-Options:        -Wall -fno-warn-unused-do-bind
   else
@@ -36,3 +37,16 @@ library
 Source-Repository head
   Type:                 git
   Location:             https://github.com/kazu-yamamoto/llrbtree
+
+Test-Suite doctests
+  Main-Is:
+      Doctests.hs
+  Type:
+      exitcode-stdio-1.0
+  Ghc-Options:
+      -Wall -threaded
+  Hs-Source-Dirs:
+      test
+  Build-Depends:
+      base
+    , doctest

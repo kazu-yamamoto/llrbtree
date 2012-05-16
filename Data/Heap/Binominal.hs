@@ -1,7 +1,7 @@
 {-|
   Binominal Heap
 
-  - the fun of programming
+  - Purely Functional Data Structures
 -}
 
 module Data.Heap.Binominal (

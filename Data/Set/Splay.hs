@@ -116,7 +116,7 @@ singleton x = Node Leaf x Leaf
 
 ----------------------------------------------------------------
 
-{-| Insertion.
+{-| Insertion. Worst-case: O(N), amortized: O(log N).
 
 prop> insert 5 (fromList [5,3]) == fromList [3,5]
 prop> insert 7 (fromList [5,3]) == fromList [3,5,7]
@@ -182,7 +182,7 @@ member x t = case split x t of
 
 ----------------------------------------------------------------
 
-{-| Finding the minimum element.
+{-| Finding the minimum element. Worst-case: O(N), amortized: O(log N).
 
 >>> fst $ Data.Set.Splay.minimum (fromList [3,5,1])
 1
@@ -196,7 +196,7 @@ minimum :: Splay a -> (a, Splay a)
 minimum Leaf = error "minimum"
 minimum t = let (x,mt) = deleteMin t in (x, Node Leaf x mt)
 
-{-| Finding the maximum element.
+{-| Finding the maximum element. Worst-case: O(N), amortized: O(log N).
 
 >>> fst $ Data.Set.Splay.maximum (fromList [3,5,1])
 5
@@ -212,7 +212,7 @@ maximum t = let (x,mt) = deleteMax t in (x, Node mt x Leaf)
 
 ----------------------------------------------------------------
 
-{-| Deleting the minimum element.
+{-| Deleting the minimum element. Worst-case: O(N), amortized: O(log N).
 
 >>> snd (deleteMin (fromList [5,3,7])) == fromList [5,7]
 True
@@ -239,7 +239,7 @@ prop_deleteMinModel xs = ys == zs
     ys = toList t'
     zs = tail . L.nub . L.sort $ xs
 
-{-| Deleting the maximum
+{-| Deleting the maximum. Worst-case: O(N), amortized: O(log N).
 
 >>> snd (deleteMax (fromList [(5,"a"), (3,"b"), (7,"c")])) == fromList [(3,"b"), (5,"a")]
 True
@@ -311,7 +311,7 @@ prop_deleteModel xxs@(x:xs) = ys == zs
 
 ----------------------------------------------------------------
 
-{-| Creating a union set from two sets.
+{-| Creating a union set from two sets. Worst-case: O(N), amortized: O(log N).
 
 >>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
 True

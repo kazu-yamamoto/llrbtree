@@ -112,7 +112,7 @@ singleton x = Node B 1 Leaf x Leaf
 
 ----------------------------------------------------------------
 
-{-| Creating a tree from a list. O(N log N)
+{-| Creating a tree from a list. Worst-case: O(N log N)
 
 >>> empty == fromList []
 True
@@ -127,7 +127,7 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-{-| Creating a list from a tree. O(N)
+{-| Creating a list from a tree. Worst-case: O(N)
 
 >>> toList (fromList [5,3])
 [3,5]
@@ -221,7 +221,7 @@ turnB' (Node _ h l x r) = Node B h l x r
 
 ----------------------------------------------------------------
 
-{-| Finding the minimum element. O(log N)
+{-| Finding the minimum element. Worst-case: O(log N)
 
 >>> minimum (fromList [3,5,1])
 1
@@ -234,7 +234,7 @@ minimum (Node _ _ Leaf x _) = x
 minimum (Node _ _ l _ _)    = minimum l
 minimum _                   = error "minimum"
 
-{-| Finding the maximum element. O(log N)
+{-| Finding the maximum element. Worst-case: O(log N)
 
 >>> maximum (fromList [3,5,1])
 5
@@ -297,7 +297,7 @@ isLeftLean (Node _ _ r _ l) = isLeftLean r && isLeftLean l
 
 ----------------------------------------------------------------
 
-{-| Insertion. O(log N)
+{-| Insertion. Worst-case: O(log N)
 
 >>> insert 5 (fromList [5,3]) == fromList [3,5]
 True
@@ -332,7 +332,7 @@ balanceR c h l x r = Node c h l x r
 
 ----------------------------------------------------------------
 
-{-| Deleting the minimum element. O(log N)
+{-| Deleting the minimum element. Worst-case: O(log N)
 
 >>> deleteMin (fromList [5,3,7]) == fromList [5,7]
 True
@@ -470,7 +470,7 @@ hardMax _              = error "hardMax"
 
 ----------------------------------------------------------------
 
-{-| Deleting this element from a tree. O(log N)
+{-| Deleting this element from a tree. Worst-case: O(log N)
 
 >>> delete 5 (fromList [5,3]) == singleton 3
 True
@@ -535,7 +535,7 @@ deleteEQ _ _ _ _ _ _ = error "deleteEQ"
 -- Set operations
 ----------------------------------------------------------------
 
-{-| Joining two trees with an element. O(log N)
+{-| Joining two trees with an element. Worst-case: O(log N)
 
     Each element of the left tree must be less than the element.
     Each element of the right tree must be greater than the element.
@@ -569,7 +569,7 @@ joinGT _ _ _ _ = error "joinGT"
 
 ----------------------------------------------------------------
 
-{-| Merging two trees. O(log N)
+{-| Merging two trees. Worst-case: O(log N)
 
     Each element of the left tree must be less than each element of
     the right tree. Both trees must have black root.
@@ -620,7 +620,7 @@ mergeEQ _ _ = error "mergeEQ"
 
 ----------------------------------------------------------------
 
-{-| Splitting a tree. O(log N)
+{-| Splitting a tree. Worst-case: O(log N)
 
 >>> split 2 (fromList [5,3]) == (empty, fromList [3,5])
 True
@@ -643,7 +643,7 @@ split kx (Node _ _ l x r) = case compare kx x of
 
 ----------------------------------------------------------------
 
-{-| Creating a union tree from two trees. O(N + M)
+{-| Creating a union tree from two trees. Worst-case: O(N + M)
 
 >>> union (fromList [5,3]) (fromList [5,7]) == fromList [3,5,7]
 True
@@ -656,7 +656,7 @@ union t1 (Node _ _ l x r) = join (union l' l) x (union r' r)
   where
     (l',r') = split x t1
 
-{-| Creating a intersection tree from trees. O(N + N)
+{-| Creating a intersection tree from trees. Worst-case: O(N + N)
 
 >>> intersection (fromList [5,3]) (fromList [5,7]) == singleton 5
 True
@@ -671,7 +671,7 @@ intersection t1 (Node _ _ l x r)
   where
     (l',r') = split x t1
 
-{-| Creating a difference tree from trees. O(N + N)
+{-| Creating a difference tree from trees. Worst-case: O(N + N)
 
 >>> difference (fromList [5,3]) (fromList [5,7]) == singleton 3
 True

@@ -66,7 +66,7 @@ singleton x = Node Leaf x Leaf
 
 ----------------------------------------------------------------
 
-{-| Insertion. Worst-case: O(N), amortized time: O(log N).
+{-| Insertion. Worst-case: O(N), amortized: O(log N).
 
 >>> insert 7 (fromList [5,3]) == fromList [3,5,7]
 True
@@ -125,7 +125,7 @@ minimum (Node _ x _) = Just x
 
 ----------------------------------------------------------------
 
-{-| Deleting the minimum element. Worst-case: O(N), amortized time: O(log N).
+{-| Deleting the minimum element. Worst-case: O(N), amortized: O(log N).
 
 >>> deleteMin (fromList [5,3,7]) == fromList [5,7]
 True
@@ -142,7 +142,7 @@ deleteMin2 Leaf = Nothing
 deleteMin2 h    = (\m -> (m, deleteMin h)) <$> minimum h
 
 ----------------------------------------------------------------
-{-| Merging two heaps. Worst-case: O(N), amortized time: O(log N).
+{-| Merging two heaps. Worst-case: O(N), amortized: O(log N).
 
 >>> merge (fromList [5,3]) (fromList [5,7]) == fromList [3,5,5,7]
 True

@@ -100,7 +100,7 @@ singleton x = Some x (Node Leaf x Leaf)
 
 ----------------------------------------------------------------
 
-{-| Insertion.
+{-| Insertion. Worst-case: O(N), amortized: O(log N).
 
 >>> insert 7 (fromList [5,3]) == fromList [3,5,7]
 True
@@ -132,7 +132,7 @@ fromList = foldl' (flip insert) empty
 
 ----------------------------------------------------------------
 
-{-| Creating a list from a heap. O(N)
+{-| Creating a list from a heap. Worst-case: O(N)
 
 >>> let xs = [5,3,5]
 >>> length (toList (fromList xs)) == length xs
@@ -150,7 +150,7 @@ toList (Some _ t) = inorder t []
 
 ----------------------------------------------------------------
 
-{-| Finding the minimum element.
+{-| Finding the minimum element. Worst-case: O(1).
 
 >>> minimum (fromList [3,5,1])
 Just 1
@@ -164,7 +164,7 @@ minimum (Some m _) = Just m
 
 ----------------------------------------------------------------
 
-{-| Deleting the minimum element.
+{-| Deleting the minimum element. Worst-case: O(N), amortized: O(log N).
 
 >>> deleteMin (fromList [5,3,7]) == fromList [5,7]
 True
@@ -198,7 +198,7 @@ findMin' (Node Leaf x _) = Just x
 findMin' (Node l _ _)    = findMin' l
 
 ----------------------------------------------------------------
-{-| Merging two heaps
+{-| Merging two heaps. Worst-case: O(N), amortized: O(log N).
 
 >>> merge (fromList [5,3]) (fromList [5,7]) == fromList [3,5,5,7]
 True
@@ -249,18 +249,3 @@ showHeap' pref (Node l x r) = show x ++ "\n"
 
 printHeap :: Show a => Splay a -> IO ()
 printHeap = putStr . showHeap
-
-{-
-Demo: http://www.link.cs.cmu.edu/splay/
-Paper: http://www.cs.cmu.edu/~sleator/papers/self-adjusting.pdf
-TopDown: http://www.cs.umbc.edu/courses/undergraduate/341/fall02/Lectures/Splay/TopDownSplay.ppt
-Blog: http://chasen.org/~daiti-m/diary/?20061223
-      http://www.geocities.jp/m_hiroi/clisp/clispb07.html
-
-
-               fromList    minimum          delMin          member
-Blanced Tree   N log N     log N            log N           log N
-Skew Heap      N log N     1                log N(???)      N/A
-Splay Heap     N           log N or A(N)?   log N or A(N)?  log N or A(N)?
-
--}

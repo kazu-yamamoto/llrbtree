@@ -87,7 +87,7 @@ singleton x = Heap [Node 0 x []]
 
 ----------------------------------------------------------------
 
-{-| Insertion. Worst-case: O(log N), amortized time: O(1)
+{-| Insertion. Worst-case: O(log N), amortized: O(1)
 
 >>> insert 7 (fromList [5,3]) == fromList [3,5,7]
 True
@@ -139,7 +139,7 @@ toList' (Node _ x ts) = x : concatMap toList' ts
 
 ----------------------------------------------------------------
 
-{-| Finding the minimum element. Worst-case: O(log N), amortized time: O(log N)
+{-| Finding the minimum element. Worst-case: O(log N), amortized: O(log N)
 
 >>> minimum (fromList [3,5,1])
 Just 1
@@ -152,7 +152,7 @@ minimum (Heap ts) = root . fst <$> deleteMin' ts
 
 ----------------------------------------------------------------
 
-{-| Deleting the minimum element. Worst-case: O(log N), amortized time: O(log N)
+{-| Deleting the minimum element. Worst-case: O(log N), amortized: O(log N)
 
 >>> deleteMin (fromList [5,3,7]) == fromList [5,7]
 True
@@ -179,7 +179,7 @@ deleteMin' (t:ts)
     Just (t',ts')    = deleteMin' ts
 
 ----------------------------------------------------------------
-{-| Merging two heaps. Worst-case: O(log N), amortized time: O(log N)
+{-| Merging two heaps. Worst-case: O(log N), amortized: O(log N)
 
 >>> merge (fromList [5,3]) (fromList [5,7]) == fromList [3,5,5,7]
 True
